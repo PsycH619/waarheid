@@ -2567,6 +2567,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadClients();
   };
 
+  window.viewProjectDetailsFromClient = function(projectId) {
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
   window.viewClient = function(clientId) {
     const client = DataManager.clients.getById(clientId);
     const projects = DataManager.projects.getByClient(clientId);
@@ -2591,8 +2596,19 @@ document.addEventListener('DOMContentLoaded', function() {
         ${projects.length > 0 ? `
           <ul style="list-style: none; padding: 0; margin-bottom: 2rem;">
             ${projects.map(p => `
-              <li style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem;">
-                <strong>${p.title}</strong> - <span class="status-badge ${p.status}">${p.status}</span>
+              <li onclick="viewProjectDetailsFromClient('${p.id}')" style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(197, 0, 119, 0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${p.title}</strong>
+                    <div style="font-size: 0.85rem; color: var(--dashboard-text-muted); margin-top: 0.3rem;">
+                      ${p.category || 'N/A'} • ${p.progress}% complete
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="status-badge ${p.status}">${p.status}</span>
+                    <i class="fas fa-chevron-right" style="color: var(--dashboard-primary);"></i>
+                  </div>
+                </div>
               </li>
             `).join('')}
           </ul>
