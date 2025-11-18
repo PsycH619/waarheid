@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard - Waarheid Marketing</title>
+  <meta name="description" content="Waarheid Marketing client portal dashboard">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Dashboard Header -->
+  <header class="dashboard-header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="images/Waarheid-Marketing-neon-logo.png" alt="Waarheid Marketing" class="logo-image">
+        <span class="logo-text">Waarheid Marketing</span>
+      </a>
+
+      <div class="header-actions">
+        <button class="notifications-btn" aria-label="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">3</span>
+        </button>
+
+        <div class="user-menu">
+          <button class="user-menu-toggle" aria-label="User menu">
+            <div class="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <span class="user-name">John Doe</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+
+          <div class="user-dropdown">
+            <a href="#"><i class="fas fa-user-circle"></i> My Profile</a>
+            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+            <a href="#"><i class="fas fa-file-invoice"></i> Billing</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Container -->
+  <div class="dashboard-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active">
+          <i class="fas fa-th-large"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-briefcase"></i>
+          <span>My Projects</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-chart-line"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-file-alt"></i>
+          <span>Reports</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span>Messages</span>
+          <span class="nav-badge">2</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Schedule</span>
+        </a>
+        <a href="#" class="nav-link">
+          <i class="fas fa-file-invoice-dollar"></i>
+          <span>Invoices</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="booking.html" class="btn-book-sidebar">
+          <i class="fas fa-plus"></i>
+          New Project
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+
+      <!-- Welcome Panel -->
+      <section class="welcome-panel">
+        <div class="welcome-content">
+          <div class="welcome-avatar">
+            <div class="avatar-circle">
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+          <div class="welcome-text">
+            <h1>Welcome back, <span class="user-name-display">John</span>!</h1>
+            <p>Here's an overview of your active campaigns and projects</p>
+          </div>
+        </div>
+        <div class="welcome-stats">
+          <div class="stat-item">
+            <div class="stat-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">5</span>
+              <span class="stat-label">Active Projects</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">2</span>
+              <span class="stat-label">Pending Reviews</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Packages / Campaigns -->
+      <section class="active-packages">
+        <div class="section-header">
+          <h2>Active Campaigns & Projects</h2>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="marketing">Marketing</button>
+            <button class="filter-btn" data-filter="development">Development</button>
+            <button class="filter-btn" data-filter="automation">Automation</button>
+          </div>
+        </div>
+
+        <div class="packages-grid">
+
+          <!-- Package Card 1 -->
+          <div class="package-card" data-category="marketing" data-project-id="1">
+            <div class="package-thumbnail">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop" alt="Social Media Campaign">
+              <div class="package-badge in-progress">In Progress</div>
+            </div>
+            <div class="package-content">
+              <h3>Social Media Campaign Q1</h3>
+              <p>Instagram & Facebook advertising with engagement optimization</p>
+              <div class="package-meta">
+                <span class="meta-item"><i class="fas fa-calendar"></i> Started Feb 1, 2025</span>
+                <span class="meta-item"><i class="fas fa-chart-line"></i> 68% Complete</span>
+              </div>
+              <div class="package-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 68%"></div>
+                </div>
+              </div>
+              <button class="btn-view-details" onclick="openProjectDetail(1)">
+                View Details
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Package Card 2 -->
+          <div class="package-card" data-category="development" data-project-id="2">
+            <div class="package-thumbnail">
+              <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=400&h=250&fit=crop" alt="Website Redesign">
+              <div class="package-badge launching">Launching</div>
+            </div>
+            <div class="package-content">
+              <h3>E-commerce Website Redesign</h3>
+              <p>Complete website overhaul with modern UI/UX and SEO optimization</p>
+              <div class="package-meta">
+                <span class="meta-item"><i class="fas fa-calendar"></i> Started Jan 15, 2025</span>
+                <span class="meta-item"><i class="fas fa-chart-line"></i> 92% Complete</span>
+              </div>
+              <div class="package-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 92%"></div>
+                </div>
+              </div>
+              <button class="btn-view-details" onclick="openProjectDetail(2)">
+                View Details
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Package Card 3 -->
+          <div class="package-card" data-category="marketing" data-project-id="3">
+            <div class="package-thumbnail">
+              <img src="https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=400&h=250&fit=crop" alt="SEO Campaign">
+              <div class="package-badge optimizing">Optimizing</div>
+            </div>
+            <div class="package-content">
+              <h3>SEO Optimization Campaign</h3>
+              <p>Technical SEO, content optimization, and backlink building strategy</p>
+              <div class="package-meta">
+                <span class="meta-item"><i class="fas fa-calendar"></i> Started Dec 1, 2024</span>
+                <span class="meta-item"><i class="fas fa-chart-line"></i> 45% Complete</span>
+              </div>
+              <div class="package-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 45%"></div>
+                </div>
+              </div>
+              <button class="btn-view-details" onclick="openProjectDetail(3)">
+                View Details
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Package Card 4 -->
+          <div class="package-card" data-category="automation" data-project-id="4">
+            <div class="package-thumbnail">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop" alt="Analytics Dashboard">
+              <div class="package-badge in-progress">In Progress</div>
+            </div>
+            <div class="package-content">
+              <h3>Business Intelligence Dashboard</h3>
+              <p>Custom analytics dashboard with real-time KPI tracking and reporting</p>
+              <div class="package-meta">
+                <span class="meta-item"><i class="fas fa-calendar"></i> Started Jan 20, 2025</span>
+                <span class="meta-item"><i class="fas fa-chart-line"></i> 55% Complete</span>
+              </div>
+              <div class="package-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 55%"></div>
+                </div>
+              </div>
+              <button class="btn-view-details" onclick="openProjectDetail(4)">
+                View Details
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Dashboard Visualization Area -->
+      <section class="dashboard-visualizations">
+        <div class="section-header">
+          <h2>Performance Overview</h2>
+          <div class="date-range-selector">
+            <button class="date-btn active">Last 7 Days</button>
+            <button class="date-btn">Last 30 Days</button>
+            <button class="date-btn">Last 90 Days</button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon">
+              <i class="fas fa-eye"></i>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Total Impressions</span>
+              <span class="kpi-value">124.5K</span>
+              <span class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> 12.5%
+              </span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">
+              <i class="fas fa-mouse-pointer"></i>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Click-Through Rate</span>
+              <span class="kpi-value">3.8%</span>
+              <span class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> 8.2%
+              </span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Conversions</span>
+              <span class="kpi-value">1,247</span>
+              <span class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> 15.3%
+              </span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Revenue Generated</span>
+              <span class="kpi-value">$42.8K</span>
+              <span class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> 22.1%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+
+          <!-- Line Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Campaign Performance</h3>
+              <button class="chart-options"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+            <div class="chart-container">
+              <canvas id="performance-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Traffic Sources</h3>
+              <button class="chart-options"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+            <div class="chart-container">
+              <canvas id="traffic-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Funnel Chart Placeholder -->
+          <div class="chart-card full-width">
+            <div class="chart-header">
+              <h3>Conversion Funnel</h3>
+              <button class="chart-options"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+            <div class="funnel-container">
+              <div class="funnel-stage" style="width: 100%;">
+                <span class="funnel-label">Visitors</span>
+                <span class="funnel-value">10,500</span>
+              </div>
+              <div class="funnel-stage" style="width: 65%;">
+                <span class="funnel-label">Engaged Users</span>
+                <span class="funnel-value">6,825</span>
+              </div>
+              <div class="funnel-stage" style="width: 40%;">
+                <span class="funnel-label">Add to Cart</span>
+                <span class="funnel-value">4,200</span>
+              </div>
+              <div class="funnel-stage" style="width: 20%;">
+                <span class="funnel-label">Checkout</span>
+                <span class="funnel-value">2,100</span>
+              </div>
+              <div class="funnel-stage" style="width: 12%;">
+                <span class="funnel-label">Completed Purchase</span>
+                <span class="funnel-value">1,247</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Project Detail Modal -->
+  <div class="modal" id="project-modal">
+    <div class="modal-overlay" onclick="closeProjectDetail()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeProjectDetail()">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <div class="modal-body" id="project-detail-content">
+        <!-- Content will be dynamically loaded -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
