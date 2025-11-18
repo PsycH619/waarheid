@@ -1165,7 +1165,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Projects Section
   // ============================================
   function loadProjects() {
-    const projects = DataManager.projects.getAll();
+    const allProjects = DataManager.projects.getAll();
+    const clients = DataManager.clients.getAll();
+
+    // Get unique categories and statuses for filters
+    const categories = [...new Set(allProjects.map(p => p.category).filter(Boolean))];
+    const statuses = [...new Set(allProjects.map(p => p.status))];
 
     mainContent.innerHTML = `
       <div class="admin-action-bar">
@@ -1178,66 +1183,992 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
-      ${projects.length === 0 ? `
+      ${allProjects.length === 0 ? `
         <div class="empty-state">
           <i class="fas fa-briefcase"></i>
           <h3>No Projects</h3>
           <p>Click "New Project" to create your first project</p>
         </div>
       ` : `
-        <div class="admin-table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Client</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Progress</th>
-                <th>Budget</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${projects.map(p => {
-                const client = p.clientId ? DataManager.clients.getById(p.clientId) : null;
-                return `
-                  <tr>
-                    <td><strong>${p.title}</strong></td>
-                    <td>${client ? client.firstName + ' ' + client.lastName : '<span style="color: #f59e0b;">Unassigned</span>'}</td>
-                    <td>${p.category || 'N/A'}</td>
-                    <td><span class="status-badge ${p.status}">${p.status.replace('_', ' ')}</span></td>
-                    <td>
-                      <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                          <div style="width: ${p.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
-                        </div>
-                        <span style="font-size: 0.8rem;">${p.progress}%</span>
-                      </div>
-                    </td>
-                    <td>€${(p.budget || 0).toLocaleString()}</td>
-                    <td>
-                      <div class="table-actions">
-                        <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon" onclick="assignClient('${p.id}')" title="Assign Client">
-                          <i class="fas fa-user-plus"></i>
-                        </button>
-                        <button class="btn-icon danger" onclick="deleteProject('${p.id}')" title="Delete">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+        <!-- Search and Filter Section -->
+        <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-search"></i> Search</label>
+              <input type="text" id="project-search" placeholder="Search by project name..." onkeyup="filterProjects()">
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-user"></i> Client</label>
+              <select id="project-client-filter" onchange="filterProjects()">
+                <option value="">All Clients</option>
+                ${clients.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-folder"></i> Category</label>
+              <select id="project-category-filter" onchange="filterProjects()">
+                <option value="">All Categories</option>
+                ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-flag"></i> Status</label>
+              <select id="project-status-filter" onchange="filterProjects()">
+                <option value="">All Statuses</option>
+                ${statuses.map(status => `<option value="${status}">${status.replace('_', ' ')}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-sort"></i> Sort By</label>
+              <select id="project-sort" onchange="filterProjects()">
+                <option value="name">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="budget-high">Budget (High to Low)</option>
+                <option value="budget-low">Budget (Low to High)</option>
+                <option value="progress-high">Progress (High to Low)</option>
+                <option value="progress-low">Progress (Low to High)</option>
+                <option value="date-new">Date (Newest First)</option>
+                <option value="date-old">Date (Oldest First)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: flex-end;">
+              <button class="btn-admin secondary" onclick="clearProjectFilters()" style="width: 100%;">
+                <i class="fas fa-undo"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="projects-table-container">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Client</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                  <th>Budget</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="projects-table-body">
+                ${renderProjectRows(allProjects)}
+              </tbody>
+            </table>
+          </div>
         </div>
       `}
     `;
   }
+
+  function renderProjectRows(projects) {
+    if (projects.length === 0) {
+      return `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+            No projects match your filters
+          </td>
+        </tr>
+      `;
+    }
+
+    return projects.map(p => {
+      const client = p.clientId ? DataManager.clients.getById(p.clientId) : null;
+      return `
+        <tr onclick="viewProjectDetails('${p.id}')" style="cursor: pointer;" onmouseover="this.style.background='rgba(197, 0, 119, 0.05)'" onmouseout="this.style.background=''">
+          <td><strong>${p.title}</strong></td>
+          <td>${client ? client.firstName + ' ' + client.lastName : '<span style="color: #f59e0b;">Unassigned</span>'}</td>
+          <td>${p.category || 'N/A'}</td>
+          <td><span class="status-badge ${p.status}">${p.status.replace('_', ' ')}</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                <div style="width: ${p.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
+              </div>
+              <span style="font-size: 0.8rem;">${p.progress}%</span>
+            </div>
+          </td>
+          <td>€${(p.budget || 0).toLocaleString()}</td>
+          <td>
+            <div class="table-actions" onclick="event.stopPropagation()">
+              <button class="btn-icon" onclick="viewProjectDetails('${p.id}')" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-icon" onclick="assignClient('${p.id}')" title="Assign Client">
+                <i class="fas fa-user-plus"></i>
+              </button>
+              <button class="btn-icon danger" onclick="deleteProject('${p.id}')" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.filterProjects = function() {
+    const searchTerm = document.getElementById('project-search').value.toLowerCase();
+    const clientFilter = document.getElementById('project-client-filter').value;
+    const categoryFilter = document.getElementById('project-category-filter').value;
+    const statusFilter = document.getElementById('project-status-filter').value;
+    const sortBy = document.getElementById('project-sort').value;
+
+    let projects = DataManager.projects.getAll();
+
+    // Apply search filter
+    if (searchTerm) {
+      projects = projects.filter(p => p.title.toLowerCase().includes(searchTerm));
+    }
+
+    // Apply client filter
+    if (clientFilter) {
+      if (clientFilter === 'unassigned') {
+        projects = projects.filter(p => !p.clientId);
+      } else {
+        projects = projects.filter(p => p.clientId === clientFilter);
+      }
+    }
+
+    // Apply category filter
+    if (categoryFilter) {
+      projects = projects.filter(p => p.category === categoryFilter);
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      projects = projects.filter(p => p.status === statusFilter);
+    }
+
+    // Apply sorting
+    switch(sortBy) {
+      case 'name':
+        projects.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        projects.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'budget-high':
+        projects.sort((a, b) => (b.budget || 0) - (a.budget || 0));
+        break;
+      case 'budget-low':
+        projects.sort((a, b) => (a.budget || 0) - (b.budget || 0));
+        break;
+      case 'progress-high':
+        projects.sort((a, b) => b.progress - a.progress);
+        break;
+      case 'progress-low':
+        projects.sort((a, b) => a.progress - b.progress);
+        break;
+      case 'date-new':
+        projects.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        break;
+      case 'date-old':
+        projects.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        break;
+    }
+
+    // Update table
+    document.getElementById('projects-table-body').innerHTML = renderProjectRows(projects);
+  };
+
+  window.clearProjectFilters = function() {
+    document.getElementById('project-search').value = '';
+    document.getElementById('project-client-filter').value = '';
+    document.getElementById('project-category-filter').value = '';
+    document.getElementById('project-status-filter').value = '';
+    document.getElementById('project-sort').value = 'name';
+    filterProjects();
+  };
+
+  window.viewProjectDetails = function(projectId) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) {
+      alert('Project not found');
+      return;
+    }
+
+    const client = project.clientId ? DataManager.clients.getById(project.clientId) : null;
+    const milestones = project.milestones || [];
+    const files = project.files || [];
+    const team = project.team || [];
+    const deliverables = project.deliverables || [];
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-briefcase"></i> ${project.title}</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+        <!-- Tab Navigation -->
+        <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--dashboard-border); margin-bottom: 1.5rem; flex-wrap: wrap;">
+          <button class="project-tab active" onclick="switchProjectTab(event, 'overview')">
+            <i class="fas fa-info-circle"></i> Overview
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'milestones')">
+            <i class="fas fa-tasks"></i> Milestones
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'files')">
+            <i class="fas fa-folder-open"></i> Files
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'team')">
+            <i class="fas fa-users"></i> Team
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'deliverables')">
+            <i class="fas fa-box"></i> Deliverables
+          </button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="project-tab-overview" class="project-tab-content active">
+          <div style="display: grid; gap: 1.5rem;">
+            <!-- Project Info Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-user"></i> Client
+                </div>
+                <strong>${client ? `${client.firstName} ${client.lastName}` : '<span style="color: #f59e0b;">Unassigned</span>'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-folder"></i> Category
+                </div>
+                <strong>${project.category || 'N/A'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-flag"></i> Status
+                </div>
+                <span class="status-badge ${project.status}">${project.status.replace('_', ' ')}</span>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-euro-sign"></i> Budget
+                </div>
+                <strong>€${(project.budget || 0).toLocaleString()}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-calendar"></i> Start Date
+                </div>
+                <strong>${project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-calendar-check"></i> Deadline
+                </div>
+                <strong>${project.deadline ? new Date(project.deadline).toLocaleDateString() : 'Not set'}</strong>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span><i class="fas fa-chart-line"></i> Progress</span>
+                <strong>${project.progress}%</strong>
+              </div>
+              <div style="height: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                <div style="width: ${project.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-align-left"></i> Description
+              </div>
+              <p style="margin: 0; white-space: pre-wrap;">${project.description || 'No description provided'}</p>
+            </div>
+
+            <!-- Notes -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="color: var(--dashboard-text-muted); font-size: 0.85rem;">
+                  <i class="fas fa-sticky-note"></i> Internal Notes
+                </span>
+                <button class="btn-icon" onclick="editProjectNotes('${project.id}')" title="Edit Notes">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+              <p style="margin: 0; white-space: pre-wrap;">${project.notes || 'No notes yet'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestones Tab -->
+        <div id="project-tab-milestones" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addMilestone('${project.id}')">
+              <i class="fas fa-plus"></i> Add Milestone
+            </button>
+          </div>
+
+          <div id="milestones-list">
+            ${milestones.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-tasks" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No milestones yet. Add your first milestone to track progress.</p>
+              </div>
+            ` : milestones.map((m, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${m.completed ? '#10b981' : '#c50077'}; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                      <input type="checkbox" ${m.completed ? 'checked' : ''} onchange="toggleMilestone('${project.id}', ${index})" style="cursor: pointer;">
+                      <strong style="${m.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${m.title}</strong>
+                      ${m.dueDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(m.dueDate).toLocaleDateString()}</span>` : ''}
+                    </div>
+                    ${m.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${m.description}</p>` : ''}
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="editMilestone('${project.id}', ${index})" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteMilestone('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="project-tab-files" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="uploadProjectFile('${project.id}')">
+              <i class="fas fa-upload"></i> Upload File
+            </button>
+          </div>
+
+          <div id="files-list">
+            ${files.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No files uploaded yet. Upload project files, designs, or documents.</p>
+              </div>
+            ` : files.map((file, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-file" style="font-size: 1.5rem; color: var(--dashboard-primary);"></i>
+                    <div>
+                      <strong>${file.name}</strong>
+                      <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                        ${file.size ? `${(file.size / 1024).toFixed(1)} KB` : ''} • ${file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="downloadProjectFile('${project.id}', ${index})" title="Download">
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteProjectFile('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Team Tab -->
+        <div id="project-tab-team" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addTeamMember('${project.id}')">
+              <i class="fas fa-user-plus"></i> Add Team Member
+            </button>
+          </div>
+
+          <div id="team-list">
+            ${team.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No team members assigned. Add team members working on this project.</p>
+              </div>
+            ` : team.map((member, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${member.name}</strong>
+                    <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                      ${member.role || 'Team Member'} ${member.email ? `• ${member.email}` : ''}
+                    </div>
+                  </div>
+                  <button class="btn-icon danger" onclick="removeTeamMember('${project.id}', ${index})" title="Remove">
+                    <i class="fas fa-user-minus"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Deliverables Tab -->
+        <div id="project-tab-deliverables" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addDeliverable('${project.id}')">
+              <i class="fas fa-plus"></i> Add Deliverable
+            </button>
+          </div>
+
+          <div id="deliverables-list">
+            ${deliverables.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-box" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No deliverables defined. Add expected project deliverables.</p>
+              </div>
+            ` : deliverables.map((d, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${d.delivered ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                      <input type="checkbox" ${d.delivered ? 'checked' : ''} onchange="toggleDeliverable('${project.id}', ${index})" style="cursor: pointer;">
+                      <strong style="${d.delivered ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${d.name}</strong>
+                      ${d.deliveryDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(d.deliveryDate).toLocaleDateString()}</span>` : ''}
+                    </div>
+                    ${d.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${d.description}</p>` : ''}
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="editDeliverable('${project.id}', ${index})" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteDeliverable('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Close</button>
+        <button class="btn-admin" onclick="editProject('${project.id}'); closeModal();">
+          <i class="fas fa-edit"></i> Edit Project
+        </button>
+      </div>
+    `);
+
+    // Add tab switching styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .project-tab {
+        padding: 0.75rem 1.5rem;
+        background: rgba(255,255,255,0.05);
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--dashboard-text);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+      }
+      .project-tab:hover {
+        background: rgba(255,255,255,0.1);
+      }
+      .project-tab.active {
+        border-bottom-color: var(--dashboard-primary);
+        background: rgba(197, 0, 119, 0.1);
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  window.switchProjectTab = function(event, tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.project-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.closest('.project-tab').classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.project-tab-content').forEach(content => {
+      content.style.display = 'none';
+      content.classList.remove('active');
+    });
+    const targetContent = document.getElementById(`project-tab-${tabName}`);
+    if (targetContent) {
+      targetContent.style.display = 'block';
+      targetContent.classList.add('active');
+    }
+  };
+
+  // ============================================
+  // Milestone Functions
+  // ============================================
+  window.addMilestone = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Milestone</h3>
+        <form id="milestone-form" onsubmit="submitMilestone(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Title *</label>
+            <input type="text" id="milestone-title" required placeholder="e.g., Initial Design Concepts">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="milestone-description" rows="3" placeholder="Additional details..."></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" id="milestone-dueDate">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Milestone</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitMilestone = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestone = {
+      title: document.getElementById('milestone-title').value,
+      description: document.getElementById('milestone-description').value,
+      dueDate: document.getElementById('milestone-dueDate').value,
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+
+    const milestones = project.milestones || [];
+    milestones.push(milestone);
+    DataManager.projects.update(projectId, { milestones });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.editMilestone = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.milestones[index]) return;
+
+    const milestone = project.milestones[index];
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Milestone</h3>
+        <form id="edit-milestone-form" onsubmit="submitEditMilestone(event, '${projectId}', ${index})">
+          <div class="admin-form-group">
+            <label>Title *</label>
+            <input type="text" id="edit-milestone-title" required value="${milestone.title}">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="edit-milestone-description" rows="3">${milestone.description || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" id="edit-milestone-dueDate" value="${milestone.dueDate || ''}">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitEditMilestone = function(event, projectId, index) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones[index] = {
+      ...milestones[index],
+      title: document.getElementById('edit-milestone-title').value,
+      description: document.getElementById('edit-milestone-description').value,
+      dueDate: document.getElementById('edit-milestone-dueDate').value
+    };
+
+    DataManager.projects.update(projectId, { milestones });
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.deleteMilestone = function(projectId, index) {
+    if (!confirm('Delete this milestone?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones.splice(index, 1);
+    DataManager.projects.update(projectId, { milestones });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.toggleMilestone = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones[index].completed = !milestones[index].completed;
+    DataManager.projects.update(projectId, { milestones });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // File Functions
+  // ============================================
+  window.uploadProjectFile = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Upload File</h3>
+        <form id="file-upload-form" onsubmit="submitFileUpload(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>File Name *</label>
+            <input type="text" id="file-name" required placeholder="e.g., Logo Design V2.pdf">
+          </div>
+          <div class="admin-form-group">
+            <label>File URL or Description *</label>
+            <input type="text" id="file-url" required placeholder="https://... or file description">
+            <small style="color: var(--dashboard-text-muted); display: block; margin-top: 0.5rem;">
+              Note: This is a demo. In production, this would handle actual file uploads.
+            </small>
+          </div>
+          <div class="admin-form-group">
+            <label>File Size (KB)</label>
+            <input type="number" id="file-size" placeholder="e.g., 1024">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Upload</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitFileUpload = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const file = {
+      name: document.getElementById('file-name').value,
+      url: document.getElementById('file-url').value,
+      size: document.getElementById('file-size').value ? parseInt(document.getElementById('file-size').value) : null,
+      uploadedAt: new Date().toISOString()
+    };
+
+    const files = project.files || [];
+    files.push(file);
+    DataManager.projects.update(projectId, { files });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.downloadProjectFile = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.files[index]) return;
+
+    const file = project.files[index];
+    if (file.url && file.url.startsWith('http')) {
+      window.open(file.url, '_blank');
+    } else {
+      alert(`File: ${file.name}\nURL/Description: ${file.url}\n\nNote: This is a demo. In production, this would download the actual file.`);
+    }
+  };
+
+  window.deleteProjectFile = function(projectId, index) {
+    if (!confirm('Delete this file?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const files = project.files || [];
+    files.splice(index, 1);
+    DataManager.projects.update(projectId, { files });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Team Functions
+  // ============================================
+  window.addTeamMember = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Team Member</h3>
+        <form id="team-member-form" onsubmit="submitTeamMember(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Name *</label>
+            <input type="text" id="member-name" required placeholder="e.g., John Doe">
+          </div>
+          <div class="admin-form-group">
+            <label>Role *</label>
+            <input type="text" id="member-role" required placeholder="e.g., Lead Designer">
+          </div>
+          <div class="admin-form-group">
+            <label>Email</label>
+            <input type="email" id="member-email" placeholder="john@example.com">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Member</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitTeamMember = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const member = {
+      name: document.getElementById('member-name').value,
+      role: document.getElementById('member-role').value,
+      email: document.getElementById('member-email').value,
+      addedAt: new Date().toISOString()
+    };
+
+    const team = project.team || [];
+    team.push(member);
+    DataManager.projects.update(projectId, { team });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.removeTeamMember = function(projectId, index) {
+    if (!confirm('Remove this team member from the project?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const team = project.team || [];
+    team.splice(index, 1);
+    DataManager.projects.update(projectId, { team });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Deliverable Functions
+  // ============================================
+  window.addDeliverable = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Deliverable</h3>
+        <form id="deliverable-form" onsubmit="submitDeliverable(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Deliverable Name *</label>
+            <input type="text" id="deliverable-name" required placeholder="e.g., Final Website Launch">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="deliverable-description" rows="3" placeholder="Details about this deliverable..."></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Expected Delivery Date</label>
+            <input type="date" id="deliverable-date">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Deliverable</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitDeliverable = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverable = {
+      name: document.getElementById('deliverable-name').value,
+      description: document.getElementById('deliverable-description').value,
+      deliveryDate: document.getElementById('deliverable-date').value,
+      delivered: false,
+      createdAt: new Date().toISOString()
+    };
+
+    const deliverables = project.deliverables || [];
+    deliverables.push(deliverable);
+    DataManager.projects.update(projectId, { deliverables });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.editDeliverable = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.deliverables[index]) return;
+
+    const deliverable = project.deliverables[index];
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Deliverable</h3>
+        <form id="edit-deliverable-form" onsubmit="submitEditDeliverable(event, '${projectId}', ${index})">
+          <div class="admin-form-group">
+            <label>Deliverable Name *</label>
+            <input type="text" id="edit-deliverable-name" required value="${deliverable.name}">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="edit-deliverable-description" rows="3">${deliverable.description || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Expected Delivery Date</label>
+            <input type="date" id="edit-deliverable-date" value="${deliverable.deliveryDate || ''}">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitEditDeliverable = function(event, projectId, index) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables[index] = {
+      ...deliverables[index],
+      name: document.getElementById('edit-deliverable-name').value,
+      description: document.getElementById('edit-deliverable-description').value,
+      deliveryDate: document.getElementById('edit-deliverable-date').value
+    };
+
+    DataManager.projects.update(projectId, { deliverables });
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.deleteDeliverable = function(projectId, index) {
+    if (!confirm('Delete this deliverable?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables.splice(index, 1);
+    DataManager.projects.update(projectId, { deliverables });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.toggleDeliverable = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables[index].delivered = !deliverables[index].delivered;
+    DataManager.projects.update(projectId, { deliverables });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Project Notes Function
+  // ============================================
+  window.editProjectNotes = function(projectId) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Internal Notes</h3>
+        <form id="notes-form" onsubmit="submitProjectNotes(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Notes (Internal Only)</label>
+            <textarea id="project-notes" rows="8" placeholder="Add internal notes about this project...">${project.notes || ''}</textarea>
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Notes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitProjectNotes = function(event, projectId) {
+    event.preventDefault();
+    const notes = document.getElementById('project-notes').value;
+    DataManager.projects.update(projectId, { notes });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
 
   window.showCreateProjectModal = function(prefill = {}) {
     const clients = DataManager.clients.getAll();
@@ -1636,6 +2567,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadClients();
   };
 
+  window.viewProjectDetailsFromClient = function(projectId) {
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
   window.viewClient = function(clientId) {
     const client = DataManager.clients.getById(clientId);
     const projects = DataManager.projects.getByClient(clientId);
@@ -1660,8 +2596,19 @@ document.addEventListener('DOMContentLoaded', function() {
         ${projects.length > 0 ? `
           <ul style="list-style: none; padding: 0; margin-bottom: 2rem;">
             ${projects.map(p => `
-              <li style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem;">
-                <strong>${p.title}</strong> - <span class="status-badge ${p.status}">${p.status}</span>
+              <li onclick="viewProjectDetailsFromClient('${p.id}')" style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(197, 0, 119, 0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${p.title}</strong>
+                    <div style="font-size: 0.85rem; color: var(--dashboard-text-muted); margin-top: 0.3rem;">
+                      ${p.category || 'N/A'} • ${p.progress}% complete
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="status-badge ${p.status}">${p.status}</span>
+                    <i class="fas fa-chevron-right" style="color: var(--dashboard-primary);"></i>
+                  </div>
+                </div>
               </li>
             `).join('')}
           </ul>
