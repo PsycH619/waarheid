@@ -627,6 +627,115 @@ window.DataManager = (function() {
     }
   };
 
+  // ============================================
+  // Time Slots Management (for consultation booking)
+  // ============================================
+  const TimeSlotManager = {
+    getAll: function() {
+      return JSON.parse(localStorage.getItem('waarheid_timeslots') || '[]');
+    },
+
+    getAvailable: function() {
+      const slots = this.getAll();
+      const now = new Date();
+      return slots.filter(slot => {
+        const slotDate = new Date(slot.date + 'T' + slot.startTime);
+        return slot.available && !slot.bookedBy && slotDate > now;
+      }).sort((a, b) => new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime));
+    },
+
+    create: function(slotData) {
+      const slots = this.getAll();
+      const newSlot = {
+        id: DataManager.generateId('slot'),
+        date: slotData.date,
+        startTime: slotData.startTime,
+        endTime: slotData.endTime,
+        available: true,
+        bookedBy: null,
+        consultationId: null,
+        createdAt: new Date().toISOString()
+      };
+      slots.push(newSlot);
+      localStorage.setItem('waarheid_timeslots', JSON.stringify(slots));
+      return newSlot;
+    },
+
+    book: function(slotId, consultationId, clientId) {
+      const slots = this.getAll();
+      const index = slots.findIndex(s => s.id === slotId);
+      if (index !== -1) {
+        slots[index].bookedBy = clientId;
+        slots[index].consultationId = consultationId;
+        slots[index].available = false;
+        localStorage.setItem('waarheid_timeslots', JSON.stringify(slots));
+        return slots[index];
+      }
+      return null;
+    },
+
+    release: function(slotId) {
+      const slots = this.getAll();
+      const index = slots.findIndex(s => s.id === slotId);
+      if (index !== -1) {
+        slots[index].bookedBy = null;
+        slots[index].consultationId = null;
+        slots[index].available = true;
+        localStorage.setItem('waarheid_timeslots', JSON.stringify(slots));
+        return slots[index];
+      }
+      return null;
+    },
+
+    delete: function(slotId) {
+      const slots = this.getAll();
+      const filtered = slots.filter(s => s.id !== slotId);
+      localStorage.setItem('waarheid_timeslots', JSON.stringify(filtered));
+      return true;
+    }
+  };
+
+  // ============================================
+  // Notifications Management (simulated emails)
+  // ============================================
+  const NotificationManager = {
+    getAll: function() {
+      return JSON.parse(localStorage.getItem('waarheid_notifications') || '[]');
+    },
+
+    getByClient: function(clientId) {
+      return this.getAll().filter(n => n.clientId === clientId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+
+    create: function(notificationData) {
+      const notifications = this.getAll();
+      const newNotification = {
+        id: DataManager.generateId('notif'),
+        clientId: notificationData.clientId,
+        type: notificationData.type, // 'booking_pending', 'booking_approved', 'booking_rejected'
+        subject: notificationData.subject,
+        message: notificationData.message,
+        metadata: notificationData.metadata || {},
+        read: false,
+        createdAt: new Date().toISOString()
+      };
+      notifications.push(newNotification);
+      localStorage.setItem('waarheid_notifications', JSON.stringify(notifications));
+      return newNotification;
+    },
+
+    markAsRead: function(notificationId) {
+      const notifications = this.getAll();
+      const index = notifications.findIndex(n => n.id === notificationId);
+      if (index !== -1) {
+        notifications[index].read = true;
+        localStorage.setItem('waarheid_notifications', JSON.stringify(notifications));
+        return notifications[index];
+      }
+      return null;
+    }
+  };
+
   // Initialize data on load
   initializeData();
 
@@ -639,6 +748,8 @@ window.DataManager = (function() {
     invoices: InvoiceManager,
     analytics: AnalyticsManager,
     tickets: TicketManager,
+    timeslots: TimeSlotManager,
+    notifications: NotificationManager,
 
     // Utility functions
     generateId: function(prefix) {
@@ -652,7 +763,15 @@ window.DataManager = (function() {
       localStorage.removeItem('waarheid_messages');
       localStorage.removeItem('waarheid_invoices');
       localStorage.removeItem('waarheid_analytics');
+      localStorage.removeItem('waarheid_timeslots');
+      localStorage.removeItem('waarheid_notifications');
       initializeData();
+    },
+
+    // Helper to generate Google Meet link (simulated)
+    generateMeetLink: function(consultationId) {
+      const randomCode = Math.random().toString(36).substring(2, 12);
+      return `https://meet.google.com/${randomCode}`;
     }
   };
 })();

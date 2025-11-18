@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'consultations':
         loadConsultations();
         break;
+      case 'timeslots':
+        loadTimeSlots();
+        break;
       case 'projects':
         loadProjects();
         break;
