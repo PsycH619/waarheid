@@ -1672,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="admin-modal-footer">
         <button class="btn-admin secondary" onclick="closeModal()">Close</button>
-        <button class="btn-admin" onclick="editProject('${project.id}'); closeModal();">
+        <button class="btn-admin" onclick="editProject('${project.id}')">
           <i class="fas fa-edit"></i> Edit Project
         </button>
       </div>
