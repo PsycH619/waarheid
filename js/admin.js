@@ -413,6 +413,229 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // ============================================
+  // Time Slots Section
+  // ============================================
+  function loadTimeSlots() {
+    const slots = DataManager.timeslots.getAll().sort((a, b) =>
+      new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime)
+    );
+
+    mainContent.innerHTML = `
+      <div class="admin-action-bar">
+        <h1>Available Time Slots</h1>
+        <div class="admin-actions">
+          <button class="btn-admin" onclick="showCreateTimeSlotsModal()">
+            <i class="fas fa-plus"></i>
+            Create Time Slots
+          </button>
+        </div>
+      </div>
+
+      ${slots.length === 0 ? `
+        <div class="empty-state">
+          <i class="fas fa-clock"></i>
+          <h3>No Time Slots</h3>
+          <p>Create time slots to allow clients to book consultations</p>
+        </div>
+      ` : `
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Booked By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${slots.map(slot => {
+                const client = slot.bookedBy ? DataManager.clients.getById(slot.bookedBy) : null;
+                const isPast = new Date(slot.date + 'T' + slot.startTime) < new Date();
+                return `
+                  <tr style="${isPast ? 'opacity: 0.5;' : ''}">
+                    <td><strong>${new Date(slot.date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</strong></td>
+                    <td>${slot.startTime} - ${slot.endTime}</td>
+                    <td>
+                      ${slot.available ?
+                        '<span class="status-badge" style="background: #d1fae5; color: #065f46;">Available</span>' :
+                        '<span class="status-badge" style="background: #fee2e2; color: #991b1b;">Booked</span>'}
+                    </td>
+                    <td>${client ? client.firstName + ' ' + client.lastName : '-'}</td>
+                    <td>
+                      <div class="table-actions">
+                        ${!slot.available && slot.consultationId ? `
+                          <button class="btn-icon" onclick="viewConsultation('${slot.consultationId}')" title="View Consultation">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        ` : ''}
+                        ${slot.available ? `
+                          <button class="btn-icon danger" onclick="deleteTimeSlot('${slot.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        ` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    `;
+  }
+
+  window.showCreateTimeSlotsModal = function() {
+    showModal(`
+      <div class="admin-modal-header">
+        <h3>Create Time Slots</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="create-timeslots-form">
+          <div class="admin-form-group">
+            <label>Start Date *</label>
+            <input type="date" name="startDate" required min="${new Date().toISOString().split('T')[0]}">
+          </div>
+
+          <div class="admin-form-group">
+            <label>End Date *</label>
+            <input type="date" name="endDate" required min="${new Date().toISOString().split('T')[0]}">
+          </div>
+
+          <div class="admin-form-group">
+            <label>Select Days</label>
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="1" checked style="cursor: pointer;"> <span style="font-size: 0.85rem;">Mon</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="2" checked style="cursor: pointer;"> <span style="font-size: 0.85rem;">Tue</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="3" checked style="cursor: pointer;"> <span style="font-size: 0.85rem;">Wed</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="4" checked style="cursor: pointer;"> <span style="font-size: 0.85rem;">Thu</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="5" checked style="cursor: pointer;"> <span style="font-size: 0.85rem;">Fri</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="6" style="cursor: pointer;"> <span style="font-size: 0.85rem;">Sat</span>
+              </label>
+              <label style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; cursor: pointer; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <input type="checkbox" name="days" value="0" style="cursor: pointer;"> <span style="font-size: 0.85rem;">Sun</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label>Start Time *</label>
+              <input type="time" name="startTime" value="09:00" required>
+            </div>
+
+            <div class="admin-form-group">
+              <label>End Time *</label>
+              <input type="time" name="endTime" value="17:00" required>
+            </div>
+          </div>
+
+          <div class="admin-form-group">
+            <label>Slot Duration (minutes) *</label>
+            <select name="duration" required>
+              <option value="30">30 minutes</option>
+              <option value="60" selected>60 minutes</option>
+              <option value="90">90 minutes</option>
+              <option value="120">120 minutes</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="submitCreateTimeSlots()">
+          <i class="fas fa-plus"></i> Generate Slots
+        </button>
+      </div>
+    `);
+  };
+
+  window.submitCreateTimeSlots = function() {
+    const form = document.getElementById('create-timeslots-form');
+    const formData = new FormData(form);
+
+    const startDate = new Date(formData.get('startDate'));
+    const endDate = new Date(formData.get('endDate'));
+    const selectedDays = formData.getAll('days').map(Number);
+    const startTime = formData.get('startTime');
+    const endTime = formData.get('endTime');
+    const duration = parseInt(formData.get('duration'));
+
+    if (selectedDays.length === 0) {
+      alert('Please select at least one day');
+      return;
+    }
+
+    let slotsCreated = 0;
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      if (selectedDays.includes(currentDate.getDay())) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+
+        let slotStart = startTime;
+        const [endHour, endMin] = endTime.split(':').map(Number);
+
+        while (true) {
+          const [startHour, startMin] = slotStart.split(':').map(Number);
+          const slotEndMin = startMin + duration;
+          const slotEndHour = startHour + Math.floor(slotEndMin / 60);
+          const finalEndMin = slotEndMin % 60;
+
+          if (slotEndHour > endHour || (slotEndHour === endHour && finalEndMin > endMin)) {
+            break;
+          }
+
+          const slotEnd = String(slotEndHour).padStart(2, '0') + ':' + String(finalEndMin).padStart(2, '0');
+
+          DataManager.timeslots.create({
+            date: dateStr,
+            startTime: slotStart,
+            endTime: slotEnd
+          });
+
+          slotsCreated++;
+          slotStart = slotEnd;
+        }
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    closeModal();
+    alert('Created ' + slotsCreated + ' time slots successfully!');
+    loadTimeSlots();
+  };
+
+  window.deleteTimeSlot = function(slotId) {
+    const slot = DataManager.timeslots.getAll().find(s => s.id === slotId);
+    if (slot && !slot.available) {
+      alert('Cannot delete a booked time slot. Cancel the consultation first.');
+      return;
+    }
+
+    if (confirm('Delete this time slot?')) {
+      DataManager.timeslots.delete(slotId);
+      loadTimeSlots();
+    }
+  };
+
+  // ============================================
   // Projects Section
   // ============================================
   function loadProjects() {
