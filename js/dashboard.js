@@ -331,16 +331,87 @@ document.addEventListener('DOMContentLoaded', function() {
 
       ${project.milestones && project.milestones.length > 0 ? `
         <div class="project-progress-section">
-          <h3>Milestones & Timeline</h3>
+          <h3><i class="fas fa-tasks"></i> Milestones & Timeline</h3>
           <div class="project-milestones">
             ${project.milestones.map(milestone => `
-              <div class="milestone-item">
-                <div class="milestone-icon ${milestone.completed ? 'completed' : 'pending'}">
-                  <i class="fas ${milestone.completed ? 'fa-check' : 'fa-clock'}"></i>
+              <div class="milestone-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${milestone.completed ? '#10b981' : '#c50077'}; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                  <div style="flex-shrink: 0; margin-top: 0.2rem;">
+                    <div class="milestone-icon ${milestone.completed ? 'completed' : 'pending'}" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${milestone.completed ? '#10b981' : 'rgba(197, 0, 119, 0.2)'}; color: ${milestone.completed ? 'white' : 'var(--dashboard-primary)'};">
+                      <i class="fas ${milestone.completed ? 'fa-check' : 'fa-clock'}" style="font-size: 0.75rem;"></i>
+                    </div>
+                  </div>
+                  <div style="flex: 1;">
+                    <div class="milestone-title" style="font-weight: 600; margin-bottom: 0.3rem; ${milestone.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${milestone.title}</div>
+                    ${milestone.dueDate ? `<div class="milestone-date" style="font-size: 0.85rem; color: var(--dashboard-text-muted); margin-bottom: 0.3rem;"><i class="fas fa-calendar"></i> Due: ${new Date(milestone.dueDate).toLocaleDateString()}</div>` : ''}
+                    ${milestone.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">${milestone.description}</p>` : ''}
+                  </div>
                 </div>
-                <div class="milestone-info">
-                  <div class="milestone-title">${milestone.title}</div>
-                  <div class="milestone-date">${milestone.date}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${project.deliverables && project.deliverables.length > 0 ? `
+        <div class="project-progress-section">
+          <h3><i class="fas fa-box"></i> Deliverables</h3>
+          <div style="margin-top: 1rem;">
+            ${project.deliverables.map(deliverable => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${deliverable.delivered ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                  <div style="flex-shrink: 0; margin-top: 0.2rem;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${deliverable.delivered ? '#10b981' : 'rgba(245, 158, 11, 0.2)'}; color: ${deliverable.delivered ? 'white' : '#f59e0b'};">
+                      <i class="fas ${deliverable.delivered ? 'fa-check' : 'fa-hourglass-half'}" style="font-size: 0.75rem;"></i>
+                    </div>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 0.3rem; ${deliverable.delivered ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${deliverable.name}</div>
+                    ${deliverable.deliveryDate ? `<div style="font-size: 0.85rem; color: var(--dashboard-text-muted); margin-bottom: 0.3rem;"><i class="fas fa-calendar"></i> Expected: ${new Date(deliverable.deliveryDate).toLocaleDateString()}</div>` : ''}
+                    ${deliverable.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">${deliverable.description}</p>` : ''}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${project.files && project.files.length > 0 ? `
+        <div class="project-progress-section">
+          <h3><i class="fas fa-folder-open"></i> Project Files</h3>
+          <div style="margin-top: 1rem;">
+            ${project.files.map(file => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <i class="fas fa-file" style="font-size: 1.5rem; color: var(--dashboard-primary);"></i>
+                  <div>
+                    <div style="font-weight: 600;">${file.name}</div>
+                    <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                      ${file.size ? `${(file.size / 1024).toFixed(1)} KB • ` : ''}${file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : ''}
+                    </div>
+                  </div>
+                </div>
+                ${file.url ? `
+                  <a href="${file.url}" target="_blank" class="btn-view-details" style="padding: 0.5rem 1rem; margin: 0;">
+                    <i class="fas fa-download"></i>
+                  </a>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${project.team && project.team.length > 0 ? `
+        <div class="project-progress-section">
+          <h3><i class="fas fa-users"></i> Team Members</h3>
+          <div style="margin-top: 1rem;">
+            ${project.team.map(member => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="font-weight: 600;">${member.name}</div>
+                <div style="font-size: 0.85rem; color: var(--dashboard-text-muted); margin-top: 0.3rem;">
+                  ${member.role || 'Team Member'}${member.email ? ` • ${member.email}` : ''}
                 </div>
               </div>
             `).join('')}
