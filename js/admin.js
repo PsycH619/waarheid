@@ -35,12 +35,18 @@ document.addEventListener('DOMContentLoaded', function() {
   function navigateToSection(section) {
     // Update active nav
     navLinks.forEach(l => l.classList.remove('active'));
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    const targetLink = document.querySelector(`[data-section="${section}"]`);
+    if (targetLink) {
+      targetLink.classList.add('active');
+    }
 
     // Load section content
     currentSection = section;
     loadSection(section);
   }
+
+  // Expose navigateToSection globally for use in other functions
+  window.navigateToSection = navigateToSection;
 
   // ============================================
   // Section Loaders
@@ -79,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const projects = DataManager.projects.getAll();
     const clients = DataManager.clients.getAll();
     const invoices = DataManager.invoices.getAll();
+    const unreadMessages = DataManager.tickets.getUnreadCount(null, true);
 
     const pendingConsultations = consultations.filter(c => c.status === 'pending').length;
     const activeProjects = projects.filter(p => p.status === 'in_progress').length;
@@ -145,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <i class="fas fa-envelope"></i>
             </div>
           </div>
-          <div class="admin-stat-value">${messages.length}</div>
+          <div class="admin-stat-value">${unreadMessages}</div>
           <div class="admin-stat-label">Unread Messages</div>
         </div>
       </div>
