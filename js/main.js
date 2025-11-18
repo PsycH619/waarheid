@@ -346,10 +346,10 @@ document.addEventListener('DOMContentLoaded', function() {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
+        this.size = Math.random() * 3 + 1;
         this.speedX = Math.random() * 0.5 - 0.25;
         this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.5 + 0.3;
+        this.opacity = Math.random() * 0.6 + 0.4;
       }
 
       update() {
@@ -364,16 +364,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       draw() {
-        ctx.fillStyle = `rgba(197, 0, 119, ${this.opacity})`;
+        // Pearly gold color with gradient
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+        gradient.addColorStop(0, `rgba(255, 215, 150, ${this.opacity})`);
+        gradient.addColorStop(0.5, `rgba(218, 165, 32, ${this.opacity * 0.8})`);
+        gradient.addColorStop(1, `rgba(184, 134, 11, ${this.opacity * 0.5})`);
+
+        ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Add pearly shine
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.5, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
     // Create particles
     function createParticles() {
-      const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
+      const particleCount = Math.floor((canvas.width * canvas.height) / 12000);
       for (let i = 0; i < particleCount; i++) {
         particles.push(new Particle());
       }
@@ -409,24 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
         particle.draw();
       });
 
-      // Draw connections between nearby particles
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 100) {
-            ctx.strokeStyle = `rgba(197, 0, 119, ${0.2 * (1 - distance / 100)})`;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-
       requestAnimationFrame(animate);
     }
     animate();
@@ -437,6 +431,98 @@ document.addEventListener('DOMContentLoaded', function() {
       createParticles();
     });
   }
+
+  // ============================================
+  // Drag to Scroll for Cards
+  // ============================================
+  function initDragScroll(container) {
+    if (!container) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    container.addEventListener('mousedown', (e) => {
+      isDown = true;
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+    });
+
+    container.addEventListener('mouseleave', () => {
+      isDown = false;
+    });
+
+    container.addEventListener('mouseup', () => {
+      isDown = false;
+    });
+
+    container.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX) * 2;
+      container.scrollLeft = scrollLeft - walk;
+    });
+  }
+
+  // Initialize drag scroll for category and portfolio cards
+  initDragScroll(document.querySelector('.category-cards'));
+  initDragScroll(document.querySelector('.portfolio-grid'));
+
+  // ============================================
+  // Navigation Dots for Cards
+  // ============================================
+  function initNavigationDots(container, dotsContainer) {
+    if (!container || !dotsContainer) return;
+
+    const cards = container.querySelectorAll('.category-card, .portfolio-card');
+    const cardCount = cards.length;
+
+    // Create dots
+    for (let i = 0; i < cardCount; i++) {
+      const dot = document.createElement('button');
+      dot.classList.add('card-nav-dot');
+      dot.setAttribute('aria-label', `Go to card ${i + 1}`);
+      if (i === 0) dot.classList.add('active');
+
+      dot.addEventListener('click', () => {
+        const cardWidth = cards[i].offsetWidth;
+        const gap = parseFloat(getComputedStyle(container).gap);
+        container.scrollTo({
+          left: (cardWidth + gap) * i,
+          behavior: 'smooth'
+        });
+      });
+
+      dotsContainer.appendChild(dot);
+    }
+
+    // Update active dot on scroll
+    container.addEventListener('scroll', () => {
+      const scrollLeft = container.scrollLeft;
+      const cardWidth = cards[0].offsetWidth;
+      const gap = parseFloat(getComputedStyle(container).gap);
+      const activeIndex = Math.round(scrollLeft / (cardWidth + gap));
+
+      dotsContainer.querySelectorAll('.card-nav-dot').forEach((dot, index) => {
+        if (index === activeIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    });
+  }
+
+  // Initialize navigation dots
+  initNavigationDots(
+    document.querySelector('.category-cards'),
+    document.getElementById('category-dots')
+  );
+  initNavigationDots(
+    document.querySelector('.portfolio-grid'),
+    document.getElementById('portfolio-dots')
+  );
 
   console.log('Waarheid Marketing - Website Loaded Successfully');
 });
