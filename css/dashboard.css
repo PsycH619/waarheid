@@ -17,6 +17,44 @@
 }
 
 /* ============================================
+   Cursor Control - Text cursor only on inputs
+   ============================================ */
+*, *::before, *::after {
+  cursor: default !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+textarea,
+[contenteditable="true"] {
+  cursor: text !important;
+}
+
+button,
+a,
+[role="button"],
+[onclick],
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-icon,
+.nav-link,
+.ticket-card,
+.package-card,
+.project-card,
+label,
+select {
+  cursor: pointer !important;
+}
+
+/* ============================================
    Headings - Enhanced Visibility
    ============================================ */
 h1, h2, h3, h4, h5, h6 {
