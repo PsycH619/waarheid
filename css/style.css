@@ -67,6 +67,10 @@
    ============================================ */
 *, *::before, *::after {
   cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 input[type="text"],
@@ -79,6 +83,10 @@ input[type="number"],
 textarea,
 [contenteditable="true"] {
   cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 button,

@@ -8,6 +8,10 @@
    ============================================ */
 *, *::before, *::after {
   cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 
 input[type="text"],
@@ -22,6 +26,10 @@ input[type="time"],
 textarea,
 [contenteditable="true"] {
   cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 button,
