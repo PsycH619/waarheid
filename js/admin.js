@@ -1393,6 +1393,9 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.viewProjectDetails = function(projectId) {
+    // Store current project ID for refresh operations
+    window.currentProjectId = projectId;
+
     const project = DataManager.projects.getById(projectId);
     if (!project) {
       alert('Project not found');
@@ -1406,13 +1409,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const deliverables = project.deliverables || [];
 
     showModal(`
+      <style>
+        .admin-modal-content { max-width: 950px !important; }
+      </style>
       <div class="admin-modal-header">
         <h3><i class="fas fa-briefcase"></i> ${project.title}</h3>
         <button class="admin-modal-close" onclick="closeModal()">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="admin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+      <div class="admin-modal-body">
         <!-- Tab Navigation -->
         <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--dashboard-border); margin-bottom: 1.5rem; flex-wrap: wrap;">
           <button class="project-tab active" onclick="switchProjectTab(event, 'overview')">
@@ -1697,6 +1703,9 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.switchProjectTab = function(event, tabName) {
+    // Store current tab
+    window.currentProjectTab = tabName;
+
     // Update tab buttons
     document.querySelectorAll('.project-tab').forEach(tab => tab.classList.remove('active'));
     event.target.closest('.project-tab').classList.add('active');
@@ -1710,6 +1719,85 @@ document.addEventListener('DOMContentLoaded', function() {
     if (targetContent) {
       targetContent.style.display = 'block';
       targetContent.classList.add('active');
+    }
+  };
+
+  // Helper function to refresh project modal content without closing
+  window.refreshProjectTabContent = function(projectId, tabName) {
+    if (!tabName) tabName = window.currentProjectTab || 'overview';
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const client = project.clientId ? DataManager.clients.getById(project.clientId) : null;
+    const milestones = project.milestones || [];
+    const files = project.files || [];
+    const team = project.team || [];
+    const deliverables = project.deliverables || [];
+
+    // Update specific tab content based on which tab is active
+    if (tabName === 'milestones') {
+      const milestonesList = document.getElementById('milestones-list');
+      if (milestonesList) {
+        milestonesList.innerHTML = milestones.length === 0 ? `
+          <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+            <i class="fas fa-tasks" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>No milestones yet. Add your first milestone to track progress.</p>
+          </div>
+        ` : milestones.map((m, index) => `
+          <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${m.completed ? '#10b981' : '#c50077'}; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" ${m.completed ? 'checked' : ''} onchange="toggleMilestone('${project.id}', ${index})" style="cursor: pointer;">
+                  <strong style="${m.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${m.title}</strong>
+                  ${m.dueDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(m.dueDate).toLocaleDateString()}</span>` : ''}
+                </div>
+                ${m.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${m.description}</p>` : ''}
+              </div>
+              <div class="table-actions">
+                <button class="btn-icon" onclick="editMilestone('${project.id}', ${index})" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon danger" onclick="deleteMilestone('${project.id}', ${index})" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    } else if (tabName === 'deliverables') {
+      const deliverablesList = document.getElementById('deliverables-list');
+      if (deliverablesList) {
+        deliverablesList.innerHTML = deliverables.length === 0 ? `
+          <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+            <i class="fas fa-box" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>No deliverables defined. Add expected project deliverables.</p>
+          </div>
+        ` : deliverables.map((d, index) => `
+          <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${d.delivered ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <input type="checkbox" ${d.delivered ? 'checked' : ''} onchange="toggleDeliverable('${project.id}', ${index})" style="cursor: pointer;">
+                  <strong style="${d.delivered ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${d.name}</strong>
+                  ${d.deliveryDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(d.deliveryDate).toLocaleDateString()}</span>` : ''}
+                </div>
+                ${d.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${d.description}</p>` : ''}
+              </div>
+              <div class="table-actions">
+                <button class="btn-icon" onclick="editDeliverable('${project.id}', ${index})" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon danger" onclick="deleteDeliverable('${project.id}', ${index})" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
     }
   };
 
@@ -1764,8 +1852,7 @@ document.addEventListener('DOMContentLoaded', function() {
     DataManager.projects.update(projectId, { milestones });
 
     document.querySelector('.admin-modal-overlay').remove();
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'milestones');
   };
 
   window.editMilestone = function(projectId, index) {
@@ -1817,8 +1904,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     DataManager.projects.update(projectId, { milestones });
     document.querySelector('.admin-modal-overlay').remove();
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'milestones');
   };
 
   window.deleteMilestone = function(projectId, index) {
@@ -1831,8 +1917,7 @@ document.addEventListener('DOMContentLoaded', function() {
     milestones.splice(index, 1);
     DataManager.projects.update(projectId, { milestones });
 
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'milestones');
   };
 
   window.toggleMilestone = function(projectId, index) {
@@ -1843,8 +1928,7 @@ document.addEventListener('DOMContentLoaded', function() {
     milestones[index].completed = !milestones[index].completed;
     DataManager.projects.update(projectId, { milestones });
 
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'milestones');
   };
 
   // ============================================
@@ -2049,8 +2133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     DataManager.projects.update(projectId, { deliverables });
 
     document.querySelector('.admin-modal-overlay').remove();
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'deliverables');
   };
 
   window.editDeliverable = function(projectId, index) {
@@ -2102,8 +2185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     DataManager.projects.update(projectId, { deliverables });
     document.querySelector('.admin-modal-overlay').remove();
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'deliverables');
   };
 
   window.deleteDeliverable = function(projectId, index) {
@@ -2116,8 +2198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     deliverables.splice(index, 1);
     DataManager.projects.update(projectId, { deliverables });
 
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'deliverables');
   };
 
   window.toggleDeliverable = function(projectId, index) {
@@ -2128,8 +2209,7 @@ document.addEventListener('DOMContentLoaded', function() {
     deliverables[index].delivered = !deliverables[index].delivered;
     DataManager.projects.update(projectId, { deliverables });
 
-    closeModal();
-    setTimeout(() => viewProjectDetails(projectId), 100);
+    refreshProjectTabContent(projectId, 'deliverables');
   };
 
   // ============================================
@@ -2619,8 +2699,13 @@ document.addEventListener('DOMContentLoaded', function() {
           <ul style="list-style: none; padding: 0;">
             ${invoices.map(i => `
               <li style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>${i.invoiceNumber}</strong> - €${i.amount}</span>
-                <span class="status-badge ${i.status}">${i.status}</span>
+                <span><strong>${i.invoiceNumber}</strong> - €${i.amount.toLocaleString()}</span>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span class="status-badge ${i.status}">${i.status}</span>
+                  <button class="btn-icon" onclick="viewInvoiceFromAdmin('${i.id}')" title="View Invoice">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
               </li>
             `).join('')}
           </ul>
@@ -2633,6 +2718,155 @@ document.addEventListener('DOMContentLoaded', function() {
         </button>
       </div>
     `);
+  };
+
+  // ============================================
+  // Invoice View Functions
+  // ============================================
+  window.viewInvoiceFromAdmin = function(invoiceId) {
+    const invoice = DataManager.invoices.getById(invoiceId);
+    if (!invoice) return;
+
+    const client = DataManager.clients.getById(invoice.clientId);
+    const project = invoice.projectId ? DataManager.projects.getById(invoice.projectId) : null;
+
+    const innerModal = document.createElement('div');
+    innerModal.className = 'admin-modal-overlay';
+    innerModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    innerModal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--dashboard-border); padding-bottom: 1rem;">
+          <h2 style="margin: 0;">Invoice #${invoice.invoiceNumber}</h2>
+          <button class="btn-icon" onclick="this.closest('.admin-modal-overlay').remove()" title="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Client</div>
+            <strong>${client ? `${client.firstName} ${client.lastName}` : 'N/A'}</strong>
+          </div>
+          <div>
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Status</div>
+            <span class="status-badge ${invoice.status}">${invoice.status}</span>
+          </div>
+          <div>
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Issue Date</div>
+            <strong>${new Date(invoice.issueDate).toLocaleDateString()}</strong>
+          </div>
+          <div>
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Due Date</div>
+            <strong>${new Date(invoice.dueDate).toLocaleDateString()}</strong>
+          </div>
+        </div>
+
+        ${project ? `
+          <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Project</div>
+            <strong>${project.title}</strong>
+          </div>
+        ` : ''}
+
+        ${invoice.description ? `
+          <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Description</div>
+            <p style="margin: 0; white-space: pre-wrap;">${invoice.description}</p>
+          </div>
+        ` : ''}
+
+        <div style="padding: 1.5rem; background: linear-gradient(135deg, rgba(197, 0, 119, 0.1), rgba(255, 0, 149, 0.05)); border-radius: 8px; border: 2px solid var(--dashboard-primary); text-align: center;">
+          <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Total Amount</div>
+          <div style="font-size: 2rem; font-weight: bold; color: var(--dashboard-primary);">€${invoice.amount.toLocaleString()}</div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Close</button>
+          <button class="btn-admin" onclick="downloadInvoiceFromAdmin('${invoice.id}')" style="flex: 1;">
+            <i class="fas fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(innerModal);
+  };
+
+  window.downloadInvoiceFromAdmin = function(invoiceId) {
+    const invoice = DataManager.invoices.getById(invoiceId);
+    if (!invoice) return;
+
+    const client = DataManager.clients.getById(invoice.clientId);
+    const project = invoice.projectId ? DataManager.projects.getById(invoice.projectId) : null;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${invoice.invoiceNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 2rem; border-bottom: 3px solid #c50077; padding-bottom: 1rem; }
+          .header h1 { color: #c50077; margin: 0; }
+          .details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+          .detail-group { padding: 1rem; background: #f5f5f5; border-radius: 8px; }
+          .label { font-size: 0.85rem; color: #666; margin-bottom: 0.3rem; }
+          .value { font-weight: bold; }
+          .total { text-align: center; padding: 2rem; background: linear-gradient(135deg, rgba(197, 0, 119, 0.1), rgba(255, 0, 149, 0.05)); border: 2px solid #c50077; border-radius: 8px; margin-top: 2rem; }
+          .total .amount { font-size: 2rem; color: #c50077; font-weight: bold; }
+          .status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: #10b981; color: white; }
+          .status.pending { background: #f59e0b; }
+          .status.overdue { background: #ef4444; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Invoice #${invoice.invoiceNumber}</h1>
+          <p>Your Marketing Company</p>
+        </div>
+
+        <div class="details">
+          <div class="detail-group">
+            <div class="label">Client</div>
+            <div class="value">${client ? `${client.firstName} ${client.lastName}` : 'N/A'}</div>
+          </div>
+          <div class="detail-group">
+            <div class="label">Status</div>
+            <div class="value"><span class="status ${invoice.status}">${invoice.status}</span></div>
+          </div>
+          <div class="detail-group">
+            <div class="label">Issue Date</div>
+            <div class="value">${new Date(invoice.issueDate).toLocaleDateString()}</div>
+          </div>
+          <div class="detail-group">
+            <div class="label">Due Date</div>
+            <div class="value">${new Date(invoice.dueDate).toLocaleDateString()}</div>
+          </div>
+        </div>
+
+        ${project ? `
+          <div class="detail-group" style="margin-bottom: 1.5rem;">
+            <div class="label">Project</div>
+            <div class="value">${project.title}</div>
+          </div>
+        ` : ''}
+
+        ${invoice.description ? `
+          <div class="detail-group" style="margin-bottom: 1.5rem;">
+            <div class="label">Description</div>
+            <div class="value" style="white-space: pre-wrap;">${invoice.description}</div>
+          </div>
+        ` : ''}
+
+        <div class="total">
+          <div class="label">Total Amount</div>
+          <div class="amount">€${invoice.amount.toLocaleString()}</div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   window.editClient = function(clientId) {
