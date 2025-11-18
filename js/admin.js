@@ -49,6 +49,69 @@ document.addEventListener('DOMContentLoaded', function() {
   window.navigateToSection = navigateToSection;
 
   // ============================================
+  // Stat Card Click Handlers
+  // ============================================
+  window.showConsultations = function(filterStatus) {
+    navigateToSection('consultations');
+    // Wait for section to load, then apply filter
+    setTimeout(() => {
+      const statusFilter = document.getElementById('consultation-status-filter');
+      if (statusFilter) {
+        statusFilter.value = filterStatus;
+        if (window.filterConsultations) {
+          window.filterConsultations();
+        }
+      }
+    }, 100);
+  };
+
+  window.showProjects = function(filterStatus) {
+    navigateToSection('projects');
+    setTimeout(() => {
+      const statusFilter = document.getElementById('project-status-filter');
+      if (statusFilter) {
+        statusFilter.value = filterStatus;
+        if (window.filterProjects) {
+          window.filterProjects();
+        }
+      }
+    }, 100);
+  };
+
+  window.showClients = function() {
+    navigateToSection('clients');
+  };
+
+  window.showInvoices = function(filterType) {
+    navigateToSection('invoices');
+    setTimeout(() => {
+      const statusFilter = document.getElementById('invoice-status-filter');
+      if (statusFilter && filterType === 'unpaid') {
+        statusFilter.value = 'pending';
+        if (window.filterInvoices) {
+          window.filterInvoices();
+        }
+      }
+    }, 100);
+  };
+
+  window.showMessages = function(filterType) {
+    navigateToSection('messages');
+    setTimeout(() => {
+      if (filterType === 'unread') {
+        // Filter to show unread messages
+        const unreadFilter = document.getElementById('message-status-filter');
+        if (unreadFilter) {
+          unreadFilter.value = 'unread';
+          if (window.filterMessages) {
+            window.filterMessages();
+          }
+        }
+      }
+    }, 100);
+  };
+
+  // ============================================
   // Section Loaders
   // ============================================
   function loadSection(section) {
@@ -99,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <h1>Admin Dashboard Overview</h1>
 
       <div class="admin-stats-grid">
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showConsultations('pending')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon warning">
               <i class="fas fa-calendar-check"></i>
@@ -109,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-stat-label">Pending Consultations</div>
         </div>
 
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showProjects('in_progress')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon info">
               <i class="fas fa-briefcase"></i>
@@ -119,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-stat-label">Active Projects</div>
         </div>
 
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showClients()" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon primary">
               <i class="fas fa-users"></i>
@@ -129,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-stat-label">Total Clients</div>
         </div>
 
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showInvoices('unpaid')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon warning">
               <i class="fas fa-file-invoice-dollar"></i>
@@ -139,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-stat-label">Unpaid Invoices</div>
         </div>
 
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showInvoices('all')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon success">
               <i class="fas fa-dollar-sign"></i>
@@ -149,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="admin-stat-label">Total Revenue</div>
         </div>
 
-        <div class="admin-stat-card">
+        <div class="admin-stat-card" onclick="showMessages('unread')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
           <div class="admin-stat-header">
             <div class="admin-stat-icon primary">
               <i class="fas fa-envelope"></i>
@@ -162,7 +225,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
         <div>
-          <h2 style="margin-bottom: 1rem;">Recent Consultations</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0;">Recent Consultations</h2>
+            <button class="btn-admin secondary" onclick="clearRecentConsultations()" style="padding: 0.5rem 1rem; font-size: 0.85rem;" title="Clear recent consultations view">
+              <i class="fas fa-trash"></i> Clear All
+            </button>
+          </div>
           ${renderRecentConsultations(consultations.slice(-5).reverse())}
         </div>
 
@@ -180,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     return `
-      <div class="admin-table-container">
+      <div class="admin-table-container" id="recent-consultations-container">
         <table class="admin-table">
           <thead>
             <tr>
@@ -190,9 +258,9 @@ document.addEventListener('DOMContentLoaded', function() {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            ${consultations.map(c => `
-              <tr>
+          <tbody id="recent-consultations-tbody">
+            ${consultations.map((c, index) => `
+              <tr data-consultation-id="${c.id}">
                 <td><strong>${c.name || 'N/A'}</strong></td>
                 <td>${c.service || 'General'}</td>
                 <td><span class="status-badge ${c.status}">${c.status}</span></td>
@@ -200,6 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
                   <div class="table-actions">
                     <button class="btn-icon" onclick="viewConsultation('${c.id}')" title="View">
                       <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="removeRecentConsultation('${c.id}')" title="Remove from view">
+                      <i class="fas fa-times"></i>
                     </button>
                   </div>
                 </td>
@@ -252,6 +323,44 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     `;
   }
+
+  // ============================================
+  // Recent Consultations Management
+  // ============================================
+  window.removeRecentConsultation = function(consultationId) {
+    const row = document.querySelector(`tr[data-consultation-id="${consultationId}"]`);
+    if (row) {
+      row.style.transition = 'opacity 0.3s';
+      row.style.opacity = '0';
+      setTimeout(() => {
+        row.remove();
+        // Check if table is now empty
+        const tbody = document.getElementById('recent-consultations-tbody');
+        if (tbody && tbody.children.length === 0) {
+          const container = document.getElementById('recent-consultations-container');
+          if (container) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-check"></i><p>No recent consultations</p></div>';
+          }
+        }
+      }, 300);
+    }
+  };
+
+  window.clearRecentConsultations = function() {
+    if (!confirm('Clear all recent consultations from view? This will not delete the actual data.')) {
+      return;
+    }
+
+    const container = document.getElementById('recent-consultations-container');
+    if (container) {
+      container.style.transition = 'opacity 0.3s';
+      container.style.opacity = '0';
+      setTimeout(() => {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-check"></i><p>No recent consultations</p></div>';
+        container.style.opacity = '1';
+      }, 300);
+    }
+  };
 
   // ============================================
   // Consultations Section
