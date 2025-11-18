@@ -874,6 +874,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function loadTicketsList() {
+    // Reset view state
+    currentView = 'list';
+    currentTicketId = null;
+
     const messagesList = document.getElementById('messages-list');
 
     if (!clientId) {
