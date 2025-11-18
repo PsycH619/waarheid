@@ -346,10 +346,10 @@ document.addEventListener('DOMContentLoaded', function() {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
+        this.size = Math.random() * 1.5 + 0.5;
         this.speedX = Math.random() * 0.5 - 0.25;
         this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.6 + 0.4;
+        this.opacity = Math.random() * 0.4 + 0.3;
       }
 
       update() {
@@ -364,21 +364,21 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       draw() {
-        // Pearly gold color with gradient
+        // Light blue color with gradient
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-        gradient.addColorStop(0, `rgba(255, 215, 150, ${this.opacity})`);
-        gradient.addColorStop(0.5, `rgba(218, 165, 32, ${this.opacity * 0.8})`);
-        gradient.addColorStop(1, `rgba(184, 134, 11, ${this.opacity * 0.5})`);
+        gradient.addColorStop(0, `rgba(173, 216, 230, ${this.opacity})`);
+        gradient.addColorStop(0.5, `rgba(135, 206, 235, ${this.opacity * 0.8})`);
+        gradient.addColorStop(1, `rgba(100, 149, 237, ${this.opacity * 0.5})`);
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Add pearly shine
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
+        // Add white shine
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.4})`;
         ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.5, 0, Math.PI * 2);
+        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
