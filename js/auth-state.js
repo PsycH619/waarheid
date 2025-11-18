@@ -407,23 +407,14 @@
             password: password
           });
 
-            localStorage.setItem('userData', JSON.stringify({
-              clientId: client.id,
-              firstName,
-              lastName,
-              company,
-              email,
-              createdAt: new Date().toISOString()
-            }));
-          } else {
-            localStorage.setItem('userData', JSON.stringify({
-              firstName,
-              lastName,
-              company,
-              email,
-              createdAt: new Date().toISOString()
-            }));
-          }
+          localStorage.setItem('userData', JSON.stringify({
+            clientId: client.id,
+            firstName,
+            lastName,
+            company,
+            email,
+            createdAt: new Date().toISOString()
+          }));
 
           localStorage.setItem('authToken', 'demo_token_' + Date.now());
           localStorage.setItem('userEmail', email);
