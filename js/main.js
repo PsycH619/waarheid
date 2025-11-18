@@ -346,10 +346,10 @@ document.addEventListener('DOMContentLoaded', function() {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
+        this.size = Math.random() * 1.5 + 0.5;
         this.speedX = Math.random() * 0.5 - 0.25;
         this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.6 + 0.4;
+        this.opacity = Math.random() * 0.4 + 0.3;
       }
 
       update() {
@@ -364,21 +364,21 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       draw() {
-        // Pearly gold color with gradient
+        // Light blue color with gradient
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-        gradient.addColorStop(0, `rgba(255, 215, 150, ${this.opacity})`);
-        gradient.addColorStop(0.5, `rgba(218, 165, 32, ${this.opacity * 0.8})`);
-        gradient.addColorStop(1, `rgba(184, 134, 11, ${this.opacity * 0.5})`);
+        gradient.addColorStop(0, `rgba(173, 216, 230, ${this.opacity})`);
+        gradient.addColorStop(0.5, `rgba(135, 206, 235, ${this.opacity * 0.8})`);
+        gradient.addColorStop(1, `rgba(100, 149, 237, ${this.opacity * 0.5})`);
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Add pearly shine
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
+        // Add white shine
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.4})`;
         ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.5, 0, Math.PI * 2);
+        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -478,6 +478,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const cards = container.querySelectorAll('.category-card, .portfolio-card');
     const cardCount = cards.length;
 
+    // Set first card as active initially
+    if (cards.length > 0) {
+      cards[0].classList.add('active');
+    }
+
     // Create dots
     for (let i = 0; i < cardCount; i++) {
       const dot = document.createElement('button');
@@ -486,10 +491,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (i === 0) dot.classList.add('active');
 
       dot.addEventListener('click', () => {
-        const cardWidth = cards[i].offsetWidth;
-        const gap = parseFloat(getComputedStyle(container).gap);
+        // Scroll to the card's center position
+        const containerRect = container.getBoundingClientRect();
+        const cardRect = cards[i].getBoundingClientRect();
+        const scrollOffset = cardRect.left - containerRect.left + container.scrollLeft;
+        const centerOffset = (containerRect.width - cardRect.width) / 2;
+
         container.scrollTo({
-          left: (cardWidth + gap) * i,
+          left: scrollOffset - centerOffset,
           behavior: 'smooth'
         });
       });
@@ -497,20 +506,43 @@ document.addEventListener('DOMContentLoaded', function() {
       dotsContainer.appendChild(dot);
     }
 
-    // Update active dot on scroll
+    // Update active dot and card on scroll
+    let scrollTimeout;
     container.addEventListener('scroll', () => {
-      const scrollLeft = container.scrollLeft;
-      const cardWidth = cards[0].offsetWidth;
-      const gap = parseFloat(getComputedStyle(container).gap);
-      const activeIndex = Math.round(scrollLeft / (cardWidth + gap));
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const containerCenter = container.scrollLeft + container.offsetWidth / 2;
 
-      dotsContainer.querySelectorAll('.card-nav-dot').forEach((dot, index) => {
-        if (index === activeIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
+        let closestCard = null;
+        let closestDistance = Infinity;
+
+        cards.forEach((card, index) => {
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const distance = Math.abs(containerCenter - cardCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestCard = index;
+          }
+        });
+
+        // Update active states
+        dotsContainer.querySelectorAll('.card-nav-dot').forEach((dot, index) => {
+          if (index === closestCard) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+
+        cards.forEach((card, index) => {
+          if (index === closestCard) {
+            card.classList.add('active');
+          } else {
+            card.classList.remove('active');
+          }
+        });
+      }, 100);
     });
   }
 
