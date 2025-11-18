@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <i class="fas fa-dollar-sign"></i>
             </div>
           </div>
-          <div class="admin-stat-value">$${totalRevenue.toLocaleString()}</div>
+          <div class="admin-stat-value">€{totalRevenue.toLocaleString()}</div>
           <div class="admin-stat-label">Total Revenue</div>
         </div>
 
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span style="font-size: 0.8rem;">${p.progress}%</span>
                       </div>
                     </td>
-                    <td>$${(p.budget || 0).toLocaleString()}</td>
+                    <td>€{(p.budget || 0).toLocaleString()}</td>
                     <td>
                       <div class="table-actions">
                         <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <ul style="list-style: none; padding: 0;">
             ${invoices.map(i => `
               <li style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>${i.invoiceNumber}</strong> - $${i.amount}</span>
+                <span><strong>${i.invoiceNumber}</strong> - €{i.amount}</span>
                 <span class="status-badge ${i.status}">${i.status}</span>
               </li>
             `).join('')}
@@ -1381,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td><strong>${inv.invoiceNumber}</strong></td>
                     <td>${client ? client.firstName + ' ' + client.lastName : 'N/A'}</td>
                     <td>${project ? project.title : 'N/A'}</td>
-                    <td>$${(inv.amount || 0).toLocaleString()}</td>
+                    <td>€{(inv.amount || 0).toLocaleString()}</td>
                     <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'}</td>
                     <td><span class="status-badge ${inv.status}">${inv.status}</span></td>
                     <td>
@@ -1389,9 +1389,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn-icon" onclick="viewInvoice('${inv.id}')" title="View">
                           <i class="fas fa-eye"></i>
                         </button>
-                        ${inv.status === 'pending' ? `
+                        ${inv.status === 'pending' || inv.status === 'overdue' ? `
                           <button class="btn-icon success" onclick="markInvoiceAsPaid('${inv.id}')" title="Mark as Paid">
                             <i class="fas fa-check"></i>
+                          </button>
+                        ` : ''}
+                        ${inv.status === 'paid' ? `
+                          <button class="btn-icon warning" onclick="markInvoiceAsUnpaid('${inv.id}')" title="Mark as Unpaid">
+                            <i class="fas fa-undo"></i>
                           </button>
                         ` : ''}
                         <button class="btn-icon danger" onclick="deleteInvoice('${inv.id}')" title="Delete">
@@ -1504,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div><strong>Client:</strong> ${client ? client.firstName + ' ' + client.lastName : 'N/A'}</div>
           <div><strong>Project:</strong> ${project ? project.title : 'N/A'}</div>
           <div><strong>Description:</strong> ${invoice.description}</div>
-          <div><strong>Amount:</strong> $${(invoice.amount || 0).toLocaleString()}</div>
+          <div><strong>Amount:</strong> €{(invoice.amount || 0).toLocaleString()}</div>
           <div><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</div>
           <div><strong>Status:</strong> <span class="status-badge ${invoice.status}">${invoice.status}</span></div>
           ${invoice.paidDate ? `<div><strong>Paid Date:</strong> ${new Date(invoice.paidDate).toLocaleDateString()}</div>` : ''}
@@ -1523,6 +1528,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.markInvoiceAsPaid = function(invoiceId) {
     DataManager.invoices.markAsPaid(invoiceId);
+    loadInvoices();
+  };
+
+  window.markInvoiceAsUnpaid = function(invoiceId) {
+    DataManager.invoices.markAsUnpaid(invoiceId);
     loadInvoices();
   };
 

@@ -310,11 +310,11 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="project-meta-item">
             <span class="project-meta-label">Budget</span>
-            <span class="project-meta-value">$${(project.budget || 0).toLocaleString()}</span>
+            <span class="project-meta-value">€{(project.budget || 0).toLocaleString()}</span>
           </div>
           <div class="project-meta-item">
             <span class="project-meta-label">Spent</span>
-            <span class="project-meta-value">$${(project.spent || 0).toLocaleString()}</span>
+            <span class="project-meta-value">€{(project.spent || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -1542,7 +1542,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="invoice-detail-row">
               <span class="invoice-label">Amount:</span>
-              <span class="invoice-value invoice-amount">$${(invoice.amount || 0).toLocaleString()}</span>
+              <span class="invoice-value invoice-amount">€{(invoice.amount || 0).toLocaleString()}</span>
             </div>
             <div class="invoice-detail-row">
               <span class="invoice-label">Issue Date:</span>
@@ -1685,7 +1685,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.viewInvoice = function(invoiceId) {
     const invoice = DataManager.invoices.getById(invoiceId);
     if (invoice) {
-      alert(`Invoice #${invoice.invoiceNumber}\nAmount: $${invoice.amount.toLocaleString()}\nStatus: ${invoice.status}`);
+      alert(`Invoice #${invoice.invoiceNumber}\nAmount: €{invoice.amount.toLocaleString()}\nStatus: ${invoice.status}`);
     }
   };
 
