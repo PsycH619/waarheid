@@ -1713,6 +1713,463 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
+  // ============================================
+  // Milestone Functions
+  // ============================================
+  window.addMilestone = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Milestone</h3>
+        <form id="milestone-form" onsubmit="submitMilestone(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Title *</label>
+            <input type="text" id="milestone-title" required placeholder="e.g., Initial Design Concepts">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="milestone-description" rows="3" placeholder="Additional details..."></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" id="milestone-dueDate">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Milestone</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitMilestone = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestone = {
+      title: document.getElementById('milestone-title').value,
+      description: document.getElementById('milestone-description').value,
+      dueDate: document.getElementById('milestone-dueDate').value,
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+
+    const milestones = project.milestones || [];
+    milestones.push(milestone);
+    DataManager.projects.update(projectId, { milestones });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.editMilestone = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.milestones[index]) return;
+
+    const milestone = project.milestones[index];
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Milestone</h3>
+        <form id="edit-milestone-form" onsubmit="submitEditMilestone(event, '${projectId}', ${index})">
+          <div class="admin-form-group">
+            <label>Title *</label>
+            <input type="text" id="edit-milestone-title" required value="${milestone.title}">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="edit-milestone-description" rows="3">${milestone.description || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Due Date</label>
+            <input type="date" id="edit-milestone-dueDate" value="${milestone.dueDate || ''}">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitEditMilestone = function(event, projectId, index) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones[index] = {
+      ...milestones[index],
+      title: document.getElementById('edit-milestone-title').value,
+      description: document.getElementById('edit-milestone-description').value,
+      dueDate: document.getElementById('edit-milestone-dueDate').value
+    };
+
+    DataManager.projects.update(projectId, { milestones });
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.deleteMilestone = function(projectId, index) {
+    if (!confirm('Delete this milestone?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones.splice(index, 1);
+    DataManager.projects.update(projectId, { milestones });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.toggleMilestone = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const milestones = project.milestones || [];
+    milestones[index].completed = !milestones[index].completed;
+    DataManager.projects.update(projectId, { milestones });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // File Functions
+  // ============================================
+  window.uploadProjectFile = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Upload File</h3>
+        <form id="file-upload-form" onsubmit="submitFileUpload(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>File Name *</label>
+            <input type="text" id="file-name" required placeholder="e.g., Logo Design V2.pdf">
+          </div>
+          <div class="admin-form-group">
+            <label>File URL or Description *</label>
+            <input type="text" id="file-url" required placeholder="https://... or file description">
+            <small style="color: var(--dashboard-text-muted); display: block; margin-top: 0.5rem;">
+              Note: This is a demo. In production, this would handle actual file uploads.
+            </small>
+          </div>
+          <div class="admin-form-group">
+            <label>File Size (KB)</label>
+            <input type="number" id="file-size" placeholder="e.g., 1024">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Upload</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitFileUpload = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const file = {
+      name: document.getElementById('file-name').value,
+      url: document.getElementById('file-url').value,
+      size: document.getElementById('file-size').value ? parseInt(document.getElementById('file-size').value) : null,
+      uploadedAt: new Date().toISOString()
+    };
+
+    const files = project.files || [];
+    files.push(file);
+    DataManager.projects.update(projectId, { files });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.downloadProjectFile = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.files[index]) return;
+
+    const file = project.files[index];
+    if (file.url && file.url.startsWith('http')) {
+      window.open(file.url, '_blank');
+    } else {
+      alert(`File: ${file.name}\nURL/Description: ${file.url}\n\nNote: This is a demo. In production, this would download the actual file.`);
+    }
+  };
+
+  window.deleteProjectFile = function(projectId, index) {
+    if (!confirm('Delete this file?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const files = project.files || [];
+    files.splice(index, 1);
+    DataManager.projects.update(projectId, { files });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Team Functions
+  // ============================================
+  window.addTeamMember = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Team Member</h3>
+        <form id="team-member-form" onsubmit="submitTeamMember(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Name *</label>
+            <input type="text" id="member-name" required placeholder="e.g., John Doe">
+          </div>
+          <div class="admin-form-group">
+            <label>Role *</label>
+            <input type="text" id="member-role" required placeholder="e.g., Lead Designer">
+          </div>
+          <div class="admin-form-group">
+            <label>Email</label>
+            <input type="email" id="member-email" placeholder="john@example.com">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Member</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitTeamMember = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const member = {
+      name: document.getElementById('member-name').value,
+      role: document.getElementById('member-role').value,
+      email: document.getElementById('member-email').value,
+      addedAt: new Date().toISOString()
+    };
+
+    const team = project.team || [];
+    team.push(member);
+    DataManager.projects.update(projectId, { team });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.removeTeamMember = function(projectId, index) {
+    if (!confirm('Remove this team member from the project?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const team = project.team || [];
+    team.splice(index, 1);
+    DataManager.projects.update(projectId, { team });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Deliverable Functions
+  // ============================================
+  window.addDeliverable = function(projectId) {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Add Deliverable</h3>
+        <form id="deliverable-form" onsubmit="submitDeliverable(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Deliverable Name *</label>
+            <input type="text" id="deliverable-name" required placeholder="e.g., Final Website Launch">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="deliverable-description" rows="3" placeholder="Details about this deliverable..."></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Expected Delivery Date</label>
+            <input type="date" id="deliverable-date">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Add Deliverable</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitDeliverable = function(event, projectId) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverable = {
+      name: document.getElementById('deliverable-name').value,
+      description: document.getElementById('deliverable-description').value,
+      deliveryDate: document.getElementById('deliverable-date').value,
+      delivered: false,
+      createdAt: new Date().toISOString()
+    };
+
+    const deliverables = project.deliverables || [];
+    deliverables.push(deliverable);
+    DataManager.projects.update(projectId, { deliverables });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.editDeliverable = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project || !project.deliverables[index]) return;
+
+    const deliverable = project.deliverables[index];
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Deliverable</h3>
+        <form id="edit-deliverable-form" onsubmit="submitEditDeliverable(event, '${projectId}', ${index})">
+          <div class="admin-form-group">
+            <label>Deliverable Name *</label>
+            <input type="text" id="edit-deliverable-name" required value="${deliverable.name}">
+          </div>
+          <div class="admin-form-group">
+            <label>Description</label>
+            <textarea id="edit-deliverable-description" rows="3">${deliverable.description || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label>Expected Delivery Date</label>
+            <input type="date" id="edit-deliverable-date" value="${deliverable.deliveryDate || ''}">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitEditDeliverable = function(event, projectId, index) {
+    event.preventDefault();
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables[index] = {
+      ...deliverables[index],
+      name: document.getElementById('edit-deliverable-name').value,
+      description: document.getElementById('edit-deliverable-description').value,
+      deliveryDate: document.getElementById('edit-deliverable-date').value
+    };
+
+    DataManager.projects.update(projectId, { deliverables });
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.deleteDeliverable = function(projectId, index) {
+    if (!confirm('Delete this deliverable?')) return;
+
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables.splice(index, 1);
+    DataManager.projects.update(projectId, { deliverables });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  window.toggleDeliverable = function(projectId, index) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const deliverables = project.deliverables || [];
+    deliverables[index].delivered = !deliverables[index].delivered;
+    DataManager.projects.update(projectId, { deliverables });
+
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
+  // ============================================
+  // Project Notes Function
+  // ============================================
+  window.editProjectNotes = function(projectId) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-overlay';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    modal.innerHTML = `
+      <div style="background: var(--dashboard-card); border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%;">
+        <h3 style="margin-top: 0;">Edit Internal Notes</h3>
+        <form id="notes-form" onsubmit="submitProjectNotes(event, '${projectId}')">
+          <div class="admin-form-group">
+            <label>Notes (Internal Only)</label>
+            <textarea id="project-notes" rows="8" placeholder="Add internal notes about this project...">${project.notes || ''}</textarea>
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-admin secondary" onclick="this.closest('.admin-modal-overlay').remove()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn-admin" style="flex: 1;">Save Notes</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  window.submitProjectNotes = function(event, projectId) {
+    event.preventDefault();
+    const notes = document.getElementById('project-notes').value;
+    DataManager.projects.update(projectId, { notes });
+
+    document.querySelector('.admin-modal-overlay').remove();
+    closeModal();
+    setTimeout(() => viewProjectDetails(projectId), 100);
+  };
+
   window.showCreateProjectModal = function(prefill = {}) {
     const clients = DataManager.clients.getAll();
 
