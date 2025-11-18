@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.nextMonth = function() {
-    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
     renderBookingCalendar(currentCalendarDate);
   };
 
