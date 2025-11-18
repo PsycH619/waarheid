@@ -542,12 +542,16 @@ p {
 
 .footer-section a {
   color: rgba(255, 255, 255, 0.7);
-  display: inline-block;
+  display: block;
   margin-bottom: 0.75rem;
   transition: all var(--transition-normal);
   font-size: 0.95rem;
   position: relative;
   padding-left: 0;
+}
+
+.footer-section a:first-of-type {
+  margin-top: 0.5rem;
 }
 
 .footer-section a::after {
@@ -602,6 +606,10 @@ p {
   display: none;
 }
 
+.social-links a::after {
+  display: none;
+}
+
 .social-links a:hover {
   background: var(--gradient-primary);
   border-color: transparent;
@@ -611,14 +619,17 @@ p {
 
 .footer-bottom {
   text-align: center;
-  padding: 1.5rem 0;
-  background: rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
+  padding: 2rem 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: var(--spacing-md);
 }
 
 .footer-bottom p {
   margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
 /* Footer Brand Section Enhancement */
