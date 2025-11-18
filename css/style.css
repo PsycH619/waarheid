@@ -542,31 +542,31 @@ p {
 
 .footer-section a {
   color: rgba(255, 255, 255, 0.7);
-  display: block;
+  display: inline-block;
   margin-bottom: 0.75rem;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-normal);
   font-size: 0.95rem;
   position: relative;
   padding-left: 0;
 }
 
+.footer-section a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--gradient-primary);
+  transition: width var(--transition-normal);
+}
+
 .footer-section a:hover {
   color: var(--color-white);
-  padding-left: 8px;
 }
 
-.footer-section a::before {
-  content: '→';
-  position: absolute;
-  left: -20px;
-  opacity: 0;
-  transition: all var(--transition-fast);
-  color: var(--color-primary);
-}
-
-.footer-section a:hover::before {
-  left: 0;
-  opacity: 1;
+.footer-section a:hover::after {
+  width: 100%;
 }
 
 .footer-section p i {
