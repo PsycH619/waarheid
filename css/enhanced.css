@@ -53,10 +53,14 @@
 /* ============================================
    Visual Category Cards (Full Card Layout)
    ============================================ */
+.category-cards-wrapper {
+  position: relative;
+  margin-top: 3rem;
+}
+
 .category-cards {
   display: flex;
-  gap: 2rem;
-  margin-top: 3rem;
+  gap: 1.5rem;
   overflow-x: auto;
   scroll-behavior: smooth;
   padding: 2rem 0 3rem 0;
@@ -80,24 +84,86 @@
   display: none;
 }
 
+/* Navigation Arrows */
+.cards-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.cards-nav-arrow:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 30px rgba(197, 0, 119, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.cards-nav-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.cards-nav-arrow i {
+  font-size: 1.2rem;
+  color: #c50077;
+  transition: transform 0.2s ease;
+}
+
+.cards-nav-arrow:hover i {
+  transform: translateX(0);
+}
+
+.cards-nav-arrow.prev {
+  left: 20px;
+}
+
+.cards-nav-arrow.next {
+  right: 20px;
+}
+
+.cards-nav-arrow.prev:hover i {
+  transform: translateX(-3px);
+}
+
+.cards-nav-arrow.next:hover i {
+  transform: translateX(3px);
+}
+
+.cards-nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .category-card {
   position: relative;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--color-white);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   height: auto;
-  min-height: 520px;
-  width: 380px;
+  min-height: 380px;
+  width: 340px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  opacity: 0.5;
-  transform: scale(0.92) translateY(10px);
+  opacity: 0.6;
+  transform: scale(0.94) translateY(8px);
   will-change: transform, opacity;
 }
 
@@ -107,7 +173,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 3px;
   background: linear-gradient(90deg, #c50077, #ff0095);
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -121,18 +187,18 @@
 .category-card.active {
   opacity: 1;
   transform: scale(1) translateY(0);
-  box-shadow: 0 20px 60px rgba(197, 0, 119, 0.25);
+  box-shadow: 0 12px 40px rgba(197, 0, 119, 0.2);
 }
 
 .category-card:hover {
   opacity: 1;
-  transform: scale(0.98) translateY(0);
+  transform: scale(0.96) translateY(0);
 }
 
 .category-card-image {
   position: relative;
   width: 100%;
-  height: 260px;
+  height: 200px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -143,20 +209,20 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60%;
+  height: 50%;
   background: linear-gradient(to top,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.3) 40%,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.2) 40%,
     transparent 100%);
   pointer-events: none;
   z-index: 1;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 .category-card.active .category-card-image::after {
   background: linear-gradient(to top,
-    rgba(197, 0, 119, 0.6) 0%,
-    rgba(197, 0, 119, 0.2) 40%,
+    rgba(197, 0, 119, 0.5) 0%,
+    rgba(197, 0, 119, 0.15) 40%,
     transparent 100%);
 }
 
@@ -164,17 +230,17 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   filter: brightness(1);
 }
 
 .category-card:hover .category-card-image img {
-  transform: scale(1.08);
-  filter: brightness(1.1);
+  transform: scale(1.06);
+  filter: brightness(1.08);
 }
 
 .category-card.active .category-card-image img {
-  filter: brightness(1.05);
+  filter: brightness(1.04);
 }
 
 .category-card-video {
@@ -185,7 +251,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.4s ease;
 }
 
 .category-card:hover .category-card-video {
@@ -193,23 +259,23 @@
 }
 
 .category-card-content {
-  padding: 2.5rem;
+  padding: 1.5rem 1.8rem 1.8rem;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: linear-gradient(to bottom,
     rgba(255, 255, 255, 1) 0%,
-    rgba(250, 250, 252, 1) 100%);
+    rgba(252, 252, 254, 1) 100%);
 }
 
 .category-card h3 {
-  font-size: 1.85rem;
-  margin-bottom: 1.2rem;
+  font-size: 1.35rem;
+  margin-bottom: 0.8rem;
   color: var(--color-dark);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.3;
   transition: color 0.3s ease;
 }
 
@@ -217,24 +283,31 @@
   color: #c50077;
 }
 
+.category-card-content p {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  color: #666;
+}
+
 .category-card-bullets {
   list-style: none;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
   flex: 1;
 }
 
 .category-card-bullets li {
-  padding: 0.65rem 0;
-  padding-left: 1.8rem;
+  padding: 0.45rem 0;
+  padding-left: 1.5rem;
   position: relative;
-  color: #444;
-  font-size: 0.96rem;
-  line-height: 1.5;
+  color: #555;
+  font-size: 0.82rem;
+  line-height: 1.4;
   transition: all 0.2s ease;
 }
 
 .category-card-bullets li:hover {
-  padding-left: 2rem;
+  padding-left: 1.7rem;
   color: var(--color-dark);
 }
 
@@ -244,7 +317,7 @@
   left: 0;
   color: var(--color-primary);
   font-weight: bold;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   transition: transform 0.2s ease;
 }
 
@@ -270,6 +343,39 @@
 .category-card .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(197, 0, 119, 0.35);
+}
+
+/* Mobile Responsiveness for Category Cards */
+@media (max-width: 768px) {
+  .cards-nav-arrow {
+    display: none;
+  }
+
+  .category-card {
+    width: 300px;
+    min-height: 360px;
+  }
+
+  .category-card-image {
+    height: 180px;
+  }
+
+  .category-card-content {
+    padding: 1.2rem 1.5rem 1.5rem;
+  }
+
+  .category-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .category-card-content p {
+    font-size: 0.8rem;
+  }
+
+  .category-card-bullets li {
+    font-size: 0.78rem;
+    padding: 0.35rem 0;
+  }
 }
 
 /* ============================================
