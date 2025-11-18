@@ -2978,28 +2978,28 @@ document.addEventListener('DOMContentLoaded', function() {
             <form id="client-profile-form">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
-                  <label>First Name</label>
+                  <label style="color: white;">First Name</label>
                   <input type="text" id="profile-firstname" value="${userData.firstName || ''}" readonly>
                 </div>
                 <div class="form-group">
-                  <label>Last Name</label>
+                  <label style="color: white;">Last Name</label>
                   <input type="text" id="profile-lastname" value="${userData.lastName || ''}" readonly>
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
-                  <label>Email Address</label>
+                  <label style="color: white;">Email Address</label>
                   <input type="email" id="profile-email" value="${userEmail}" readonly>
                 </div>
                 <div class="form-group">
-                  <label>Phone Number</label>
+                  <label style="color: white;">Phone Number</label>
                   <input type="tel" id="profile-phone" value="${userData.phone || ''}" readonly>
                 </div>
               </div>
 
               <div class="form-group">
-                <label>Company</label>
+                <label style="color: white;">Company</label>
                 <input type="text" id="profile-company" value="${userData.company || ''}" readonly>
               </div>
             </form>
@@ -3095,15 +3095,15 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3 style="font-size: 1rem; margin: 0 0 1rem 0;">Change Password</h3>
             <form id="change-password-form" onsubmit="changeClientPassword(event)">
               <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Current Password</label>
+                <label style="color: white;">Current Password</label>
                 <input type="password" id="current-password" required>
               </div>
               <div class="form-group" style="margin-bottom: 1rem;">
-                <label>New Password</label>
+                <label style="color: white;">New Password</label>
                 <input type="password" id="new-password" required minlength="8">
               </div>
               <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Confirm New Password</label>
+                <label style="color: white;">Confirm New Password</label>
                 <input type="password" id="confirm-password" required>
               </div>
               <button type="submit" class="btn-primary">
