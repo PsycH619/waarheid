@@ -62,6 +62,35 @@
   box-sizing: border-box;
 }
 
+/* ============================================
+   Cursor Control - Text cursor only on inputs
+   ============================================ */
+*, *::before, *::after {
+  cursor: default;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+button,
+a,
+[role="button"],
+[onclick],
+.btn,
+.nav-link,
+label {
+  cursor: pointer;
+}
+
 html {
   scroll-behavior: smooth;
   font-size: 16px;
