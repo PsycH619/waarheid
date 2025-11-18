@@ -115,7 +115,7 @@
               <i class="fas fa-project-diagram"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-value">5</span>
+              <span class="stat-value" id="active-projects-count">0</span>
               <span class="stat-label">Active Projects</span>
             </div>
           </div>
@@ -124,9 +124,14 @@
               <i class="fas fa-clock"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-value">2</span>
+              <span class="stat-value" id="pending-reviews-count">0</span>
               <span class="stat-label">Pending Reviews</span>
             </div>
+          </div>
+          <div class="stat-item">
+            <button class="btn-primary" onclick="openConsultationModal()" style="width: 100%; padding: 1rem;">
+              <i class="fas fa-calendar-plus"></i> Book Consultation
+            </button>
           </div>
         </div>
       </section>
@@ -378,6 +383,14 @@
       <div class="dashboard-section" id="section-projects">
         <div class="section-header">
           <h2>My Projects</h2>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn-secondary" onclick="openConsultationModal()">
+              <i class="fas fa-calendar-plus"></i> Book Consultation
+            </button>
+            <button class="btn-primary" onclick="openNewProjectWizard()">
+              <i class="fas fa-plus"></i> New Project
+            </button>
+          </div>
         </div>
         <div class="packages-grid" id="projects-section-grid">
           <!-- Projects will be loaded here -->
@@ -437,6 +450,20 @@
         </div>
         <div class="invoices-container" id="invoices-list">
           <!-- Invoices will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Profile Section -->
+      <div class="dashboard-section" id="section-profile">
+        <div id="profile-content">
+          <!-- Profile content will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Settings Section -->
+      <div class="dashboard-section" id="section-settings">
+        <div id="settings-content">
+          <!-- Settings content will be loaded here -->
         </div>
       </div>
 

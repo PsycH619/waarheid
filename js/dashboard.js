@@ -98,6 +98,9 @@ document.addEventListener('DOMContentLoaded', function() {
         : userData.email || 'User';
     });
 
+    // Update welcome stats
+    updateWelcomeStats();
+
     // Load client's projects
     loadClientProjects();
 
@@ -106,6 +109,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize charts
     initializeCharts();
+  }
+
+  // ============================================
+  // Update Welcome Stats
+  // ============================================
+  function updateWelcomeStats() {
+    // Get active projects count
+    const projects = clientId ? DataManager.projects.getByClient(clientId) : [];
+    const activeProjects = projects.filter(p => p.status === 'in_progress' || p.status === 'planning');
+
+    // Get pending reviews count (projects waiting for client approval)
+    const pendingReviews = projects.filter(p => p.status === 'review' || p.status === 'pending_approval');
+
+    // Update the display
+    const activeProjectsEl = document.getElementById('active-projects-count');
+    const pendingReviewsEl = document.getElementById('pending-reviews-count');
+
+    if (activeProjectsEl) {
+      activeProjectsEl.textContent = activeProjects.length;
+    }
+
+    if (pendingReviewsEl) {
+      pendingReviewsEl.textContent = pendingReviews.length;
+    }
   }
 
   // ============================================
@@ -2159,6 +2186,269 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // ============================================
+  // New Project Wizard
+  // ============================================
+  let wizardStep = 1;
+  let projectWizardData = {};
+
+  window.openNewProjectWizard = function() {
+    wizardStep = 1;
+    projectWizardData = {};
+    showWizardStep(1);
+  };
+
+  function showWizardStep(step) {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const modal = document.getElementById('project-wizard-modal') || document.createElement('div');
+    modal.id = 'project-wizard-modal';
+    modal.className = 'ticket-modal-overlay active';
+
+    let modalContent = '';
+
+    if (step === 1) {
+      modalContent = `
+        <div class="ticket-modal-container" style="max-width: 700px;">
+          <div class="ticket-modal-header">
+            <h2><i class="fas fa-rocket"></i> New Project Request - Step 1 of 3</h2>
+            <button class="modal-close-btn" onclick="closeProjectWizard()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="ticket-modal-body">
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem;">Welcome to Project Request!</h3>
+              <p style="color: var(--dashboard-text-muted);">Let's gather some basic information about your project. This helps our team understand your needs and provide the best solution.</p>
+            </div>
+
+            <form id="wizard-step-1-form" onsubmit="submitWizardStep1(event)">
+              <div class="form-group">
+                <label for="project-title"><i class="fas fa-heading"></i> Project Title *</label>
+                <input type="text" id="project-title" required placeholder="e.g., Company Website Redesign" value="${projectWizardData.title || ''}">
+                <small style="color: var(--dashboard-text-muted);">Give your project a clear, descriptive name</small>
+              </div>
+
+              <div class="form-group">
+                <label for="project-category"><i class="fas fa-tag"></i> Project Category *</label>
+                <select id="project-category" required>
+                  <option value="">Select a category</option>
+                  <option value="marketing" ${projectWizardData.category === 'marketing' ? 'selected' : ''}>Marketing & Branding</option>
+                  <option value="development" ${projectWizardData.category === 'development' ? 'selected' : ''}>Web & App Development</option>
+                  <option value="automation" ${projectWizardData.category === 'automation' ? 'selected' : ''}>Automation & BI</option>
+                  <option value="design" ${projectWizardData.category === 'design' ? 'selected' : ''}>Design Services</option>
+                  <option value="consulting" ${projectWizardData.category === 'consulting' ? 'selected' : ''}>Consulting</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="project-description"><i class="fas fa-align-left"></i> Project Description *</label>
+                <textarea id="project-description" rows="5" required placeholder="Describe what you want to achieve with this project...">${projectWizardData.description || ''}</textarea>
+                <small style="color: var(--dashboard-text-muted);">Be as detailed as possible - this helps us serve you better</small>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                <button type="button" class="btn-secondary" onclick="closeProjectWizard()">Cancel</button>
+                <button type="submit" class="btn-primary">
+                  Next Step <i class="fas fa-arrow-right"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    } else if (step === 2) {
+      modalContent = `
+        <div class="ticket-modal-container" style="max-width: 700px;">
+          <div class="ticket-modal-header">
+            <h2><i class="fas fa-rocket"></i> New Project Request - Step 2 of 3</h2>
+            <button class="modal-close-btn" onclick="closeProjectWizard()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="ticket-modal-body">
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem;">Project Goals & Requirements</h3>
+              <p style="color: var(--dashboard-text-muted);">Help us understand your objectives and specific requirements.</p>
+            </div>
+
+            <form id="wizard-step-2-form" onsubmit="submitWizardStep2(event)">
+              <div class="form-group">
+                <label for="project-goals"><i class="fas fa-bullseye"></i> Project Goals *</label>
+                <textarea id="project-goals" rows="4" required placeholder="What are your main goals? e.g., increase website traffic, improve brand awareness...">${projectWizardData.goals || ''}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="project-timeline"><i class="fas fa-calendar"></i> Preferred Timeline *</label>
+                <select id="project-timeline" required>
+                  <option value="">Select timeline</option>
+                  <option value="urgent" ${projectWizardData.timeline === 'urgent' ? 'selected' : ''}>Urgent (1-2 weeks)</option>
+                  <option value="normal" ${projectWizardData.timeline === 'normal' ? 'selected' : ''}>Normal (1-2 months)</option>
+                  <option value="flexible" ${projectWizardData.timeline === 'flexible' ? 'selected' : ''}>Flexible (2-6 months)</option>
+                  <option value="ongoing" ${projectWizardData.timeline === 'ongoing' ? 'selected' : ''}>Ongoing/Retainer</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="project-budget"><i class="fas fa-euro-sign"></i> Budget Range</label>
+                <select id="project-budget">
+                  <option value="">Select budget range (optional)</option>
+                  <option value="small" ${projectWizardData.budget === 'small' ? 'selected' : ''}>€2,000 - €5,000</option>
+                  <option value="medium" ${projectWizardData.budget === 'medium' ? 'selected' : ''}>€5,000 - €15,000</option>
+                  <option value="large" ${projectWizardData.budget === 'large' ? 'selected' : ''}>€15,000 - €50,000</option>
+                  <option value="enterprise" ${projectWizardData.budget === 'enterprise' ? 'selected' : ''}>€50,000+</option>
+                  <option value="discuss" ${projectWizardData.budget === 'discuss' ? 'selected' : ''}>Let's Discuss</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="project-requirements"><i class="fas fa-list-check"></i> Specific Requirements</label>
+                <textarea id="project-requirements" rows="4" placeholder="Any specific features, technologies, or requirements? (optional)">${projectWizardData.requirements || ''}</textarea>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                <button type="button" class="btn-secondary" onclick="showWizardStep(1)">
+                  <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn-primary">
+                  Next Step <i class="fas fa-arrow-right"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    } else if (step === 3) {
+      modalContent = `
+        <div class="ticket-modal-container" style="max-width: 700px;">
+          <div class="ticket-modal-header">
+            <h2><i class="fas fa-rocket"></i> New Project Request - Step 3 of 3</h2>
+            <button class="modal-close-btn" onclick="closeProjectWizard()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="ticket-modal-body">
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem;">Review & Submit</h3>
+              <p style="color: var(--dashboard-text-muted);">Please review your project details before submitting.</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <h4 style="margin-top: 0;">Project Summary</h4>
+              <div style="display: grid; gap: 1rem;">
+                <div><strong>Title:</strong> ${projectWizardData.title}</div>
+                <div><strong>Category:</strong> ${projectWizardData.category}</div>
+                <div><strong>Description:</strong> ${projectWizardData.description}</div>
+                <div><strong>Goals:</strong> ${projectWizardData.goals}</div>
+                <div><strong>Timeline:</strong> ${projectWizardData.timeline}</div>
+                ${projectWizardData.budget ? `<div><strong>Budget:</strong> ${projectWizardData.budget}</div>` : ''}
+                ${projectWizardData.requirements ? `<div><strong>Requirements:</strong> ${projectWizardData.requirements}</div>` : ''}
+              </div>
+            </div>
+
+            <form id="wizard-step-3-form" onsubmit="submitProjectRequest(event)">
+              <div class="form-group">
+                <label for="project-notes"><i class="fas fa-comment"></i> Additional Notes</label>
+                <textarea id="project-notes" rows="3" placeholder="Any additional information you'd like to share? (optional)"></textarea>
+              </div>
+
+              <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid #10b981; margin-bottom: 1.5rem;">
+                <p style="margin: 0; font-size: 0.9rem; color: #10b981;">
+                  <i class="fas fa-info-circle"></i> Our team will review your project request and contact you within 24-48 hours to discuss next steps.
+                </p>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                <button type="button" class="btn-secondary" onclick="showWizardStep(2)">
+                  <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn-primary">
+                  <i class="fas fa-paper-plane"></i> Submit Project Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    modal.innerHTML = modalContent;
+
+    if (!document.getElementById('project-wizard-modal')) {
+      document.body.appendChild(modal);
+    }
+    document.body.style.overflow = 'hidden';
+  }
+
+  window.submitWizardStep1 = function(event) {
+    event.preventDefault();
+    projectWizardData.title = document.getElementById('project-title').value;
+    projectWizardData.category = document.getElementById('project-category').value;
+    projectWizardData.description = document.getElementById('project-description').value;
+    wizardStep = 2;
+    showWizardStep(2);
+  };
+
+  window.submitWizardStep2 = function(event) {
+    event.preventDefault();
+    projectWizardData.goals = document.getElementById('project-goals').value;
+    projectWizardData.timeline = document.getElementById('project-timeline').value;
+    projectWizardData.budget = document.getElementById('project-budget').value;
+    projectWizardData.requirements = document.getElementById('project-requirements').value;
+    wizardStep = 3;
+    showWizardStep(3);
+  };
+
+  window.submitProjectRequest = function(event) {
+    event.preventDefault();
+    const additionalNotes = document.getElementById('project-notes').value;
+
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+    // Create project request (it will be in 'pending' status until admin approves)
+    const projectData = {
+      title: projectWizardData.title,
+      category: projectWizardData.category,
+      description: projectWizardData.description,
+      goals: projectWizardData.goals,
+      timeline: projectWizardData.timeline,
+      budget: projectWizardData.budget || 'Not specified',
+      requirements: projectWizardData.requirements,
+      additionalNotes: additionalNotes,
+      clientId: clientId,
+      clientName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+      clientEmail: userData.email,
+      status: 'planning', // pending approval
+      progress: 0,
+      startDate: new Date().toISOString().split('T')[0],
+      teamMembers: []
+    };
+
+    try {
+      const project = DataManager.projects.create(projectData);
+      closeProjectWizard();
+      alert('Project request submitted successfully! Our team will review it and contact you soon.');
+
+      // Refresh the projects view
+      if (currentSection === 'projects') {
+        loadProjectsSection();
+      } else {
+        loadClientProjects();
+      }
+    } catch (error) {
+      alert('Error submitting project request: ' + error.message);
+    }
+  };
+
+  window.closeProjectWizard = function() {
+    const modal = document.getElementById('project-wizard-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
+    }
+    wizardStep = 1;
+    projectWizardData = {};
+  };
+
+  // ============================================
   // Invoices Section
   // ============================================
   function loadInvoicesSection() {
@@ -2627,7 +2917,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const userEmail = localStorage.getItem('userEmail') || '';
 
-    mainContent.innerHTML = `
+    const profileContainer = document.getElementById('profile-content');
+    if (!profileContainer) return;
+
+    profileContainer.innerHTML = `
       <div class="dashboard-section-header">
         <h2><i class="fas fa-user-circle"></i> My Profile</h2>
       </div>
@@ -2785,7 +3078,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Settings Section
   // ============================================
   function loadSettingsSection() {
-    mainContent.innerHTML = `
+    const settingsContainer = document.getElementById('settings-content');
+    if (!settingsContainer) return;
+
+    settingsContainer.innerHTML = `
       <div class="dashboard-section-header">
         <h2><i class="fas fa-cog"></i> Settings</h2>
       </div>
