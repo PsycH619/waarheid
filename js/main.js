@@ -478,6 +478,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const cards = container.querySelectorAll('.category-card, .portfolio-card');
     const cardCount = cards.length;
 
+    // Set first card as active initially
+    if (cards.length > 0) {
+      cards[0].classList.add('active');
+    }
+
     // Create dots
     for (let i = 0; i < cardCount; i++) {
       const dot = document.createElement('button');
@@ -486,10 +491,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (i === 0) dot.classList.add('active');
 
       dot.addEventListener('click', () => {
-        const cardWidth = cards[i].offsetWidth;
-        const gap = parseFloat(getComputedStyle(container).gap);
+        // Scroll to the card's center position
+        const containerRect = container.getBoundingClientRect();
+        const cardRect = cards[i].getBoundingClientRect();
+        const scrollOffset = cardRect.left - containerRect.left + container.scrollLeft;
+        const centerOffset = (containerRect.width - cardRect.width) / 2;
+
         container.scrollTo({
-          left: (cardWidth + gap) * i,
+          left: scrollOffset - centerOffset,
           behavior: 'smooth'
         });
       });
@@ -497,20 +506,43 @@ document.addEventListener('DOMContentLoaded', function() {
       dotsContainer.appendChild(dot);
     }
 
-    // Update active dot on scroll
+    // Update active dot and card on scroll
+    let scrollTimeout;
     container.addEventListener('scroll', () => {
-      const scrollLeft = container.scrollLeft;
-      const cardWidth = cards[0].offsetWidth;
-      const gap = parseFloat(getComputedStyle(container).gap);
-      const activeIndex = Math.round(scrollLeft / (cardWidth + gap));
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const containerCenter = container.scrollLeft + container.offsetWidth / 2;
 
-      dotsContainer.querySelectorAll('.card-nav-dot').forEach((dot, index) => {
-        if (index === activeIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
+        let closestCard = null;
+        let closestDistance = Infinity;
+
+        cards.forEach((card, index) => {
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const distance = Math.abs(containerCenter - cardCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestCard = index;
+          }
+        });
+
+        // Update active states
+        dotsContainer.querySelectorAll('.card-nav-dot').forEach((dot, index) => {
+          if (index === closestCard) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+
+        cards.forEach((card, index) => {
+          if (index === closestCard) {
+            card.classList.add('active');
+          } else {
+            card.classList.remove('active');
+          }
+        });
+      }, 100);
     });
   }
 
