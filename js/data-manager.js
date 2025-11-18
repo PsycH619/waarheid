@@ -399,7 +399,14 @@ window.DataManager = (function() {
 
     create: function(invoiceData) {
       const invoices = this.getAll();
-      const invoiceNumber = 'INV-' + (invoices.length + 1).toString().padStart(4, '0');
+
+      // Generate invoice number: WM-(clientID)-(projectID)-(DATE)
+      const date = new Date();
+      const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+      const clientIdShort = (invoiceData.clientId || 'XXXX').substring(invoiceData.clientId.lastIndexOf('_') + 1);
+      const projectIdShort = (invoiceData.projectId || 'XXXX').substring(invoiceData.projectId ? invoiceData.projectId.lastIndexOf('_') + 1 : 0);
+      const invoiceNumber = `WM-${clientIdShort}-${projectIdShort}-${dateStr}`;
+
       const newInvoice = {
         id: 'inv_' + Date.now(),
         invoiceNumber,

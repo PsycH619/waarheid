@@ -1409,9 +1409,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <i class="fas fa-calendar-alt" style="font-size: 4rem; color: rgba(255,255,255,0.2); margin-bottom: 1.5rem;"></i>
           <h3 style="color: var(--dashboard-text); margin-bottom: 0.5rem;">No Scheduled Consultations</h3>
           <p style="color: var(--dashboard-text-muted);">Book a consultation to discuss your project needs.</p>
-          <a href="booking.html" class="btn-primary" style="margin-top: 2rem; display: inline-block;">
+          <button class="btn-primary" onclick="openConsultationModal()" style="margin-top: 2rem;">
             <i class="fas fa-calendar-plus"></i> Book Consultation
-          </a>
+          </button>
         </div>
       `;
       return;
@@ -1480,6 +1480,141 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
     }).join('');
   }
+
+  // ============================================
+  // Consultation Booking Modal
+  // ============================================
+  window.openConsultationModal = function() {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+    const modal = document.createElement('div');
+    modal.id = 'consultation-modal';
+    modal.className = 'ticket-modal-overlay active';
+    modal.innerHTML = `
+      <div class="ticket-modal-container" style="max-width: 600px;">
+        <div class="ticket-modal-header">
+          <h2>Book a Consultation</h2>
+          <button class="modal-close-btn" onclick="closeConsultationModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="ticket-modal-body">
+          <form id="consultation-form" onsubmit="submitConsultation(event)">
+            <div class="form-group">
+              <label for="consultation-service">
+                <i class="fas fa-briefcase"></i> Service Type *
+              </label>
+              <select id="consultation-service" required>
+                <option value="">Select a service...</option>
+                <option value="SEO Optimization">SEO Optimization</option>
+                <option value="Social Media Marketing">Social Media Marketing</option>
+                <option value="Content Marketing">Content Marketing</option>
+                <option value="PPC Advertising">PPC Advertising</option>
+                <option value="Web Design">Web Design</option>
+                <option value="Branding Strategy">Branding Strategy</option>
+                <option value="New Project Idea">New Project Idea</option>
+                <option value="General Consultation">General Consultation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="consultation-date">
+                <i class="fas fa-calendar"></i> Preferred Date *
+              </label>
+              <input type="date" id="consultation-date" required min="${new Date().toISOString().split('T')[0]}">
+            </div>
+
+            <div class="form-group">
+              <label for="consultation-time">
+                <i class="fas fa-clock"></i> Preferred Time Slot *
+              </label>
+              <select id="consultation-time" required>
+                <option value="">Select time slot...</option>
+                <option value="09:00 - 10:00">09:00 - 10:00 (Morning)</option>
+                <option value="10:00 - 11:00">10:00 - 11:00 (Morning)</option>
+                <option value="11:00 - 12:00">11:00 - 12:00 (Late Morning)</option>
+                <option value="13:00 - 14:00">13:00 - 14:00 (Afternoon)</option>
+                <option value="14:00 - 15:00">14:00 - 15:00 (Afternoon)</option>
+                <option value="15:00 - 16:00">15:00 - 16:00 (Afternoon)</option>
+                <option value="16:00 - 17:00">16:00 - 17:00 (Late Afternoon)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="consultation-phone">
+                <i class="fas fa-phone"></i> Phone Number
+              </label>
+              <input type="tel" id="consultation-phone" placeholder="Your contact number">
+            </div>
+
+            <div class="form-group">
+              <label for="consultation-message">
+                <i class="fas fa-comment"></i> Description *
+              </label>
+              <textarea
+                id="consultation-message"
+                rows="6"
+                placeholder="Please describe your project idea, goals, or what you'd like to discuss during the consultation..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="ticket-modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeConsultationModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-calendar-check"></i> Book Consultation
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeConsultationModal = function() {
+    const modal = document.getElementById('consultation-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.submitConsultation = function(event) {
+    event.preventDefault();
+
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const service = document.getElementById('consultation-service').value;
+    const date = document.getElementById('consultation-date').value;
+    const time = document.getElementById('consultation-time').value;
+    const phone = document.getElementById('consultation-phone').value;
+    const message = document.getElementById('consultation-message').value;
+
+    if (!service || !date || !time || !message) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Create consultation request
+    const consultation = DataManager.consultations.create({
+      name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Client',
+      email: userData.email || '',
+      phone: phone,
+      service: service,
+      preferredDate: date,
+      preferredTime: time,
+      message: message,
+      status: 'pending'
+    });
+
+    closeConsultationModal();
+    alert('Consultation booked successfully! We will contact you to confirm the appointment.');
+    loadScheduleSection();
+  };
 
   // ============================================
   // Invoices Section
@@ -1684,13 +1819,234 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.viewInvoice = function(invoiceId) {
     const invoice = DataManager.invoices.getById(invoiceId);
-    if (invoice) {
-      alert(`Invoice #${invoice.invoiceNumber}\nAmount: €${invoice.amount.toLocaleString()}\nStatus: ${invoice.status}`);
+    if (!invoice) return;
+
+    const client = DataManager.clients.getById(invoice.clientId);
+    const project = invoice.projectId ? DataManager.projects.getById(invoice.projectId) : null;
+    const issueDate = new Date(invoice.issueDate);
+    const dueDate = new Date(invoice.dueDate);
+
+    const modal = document.createElement('div');
+    modal.id = 'invoice-view-modal';
+    modal.className = 'ticket-modal-overlay active';
+    modal.innerHTML = `
+      <div class="ticket-modal-container" style="max-width: 700px;">
+        <div class="ticket-modal-header">
+          <h2>Invoice Details</h2>
+          <button class="modal-close-btn" onclick="closeInvoiceViewModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="ticket-modal-body">
+          <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; border: 1px solid var(--dashboard-border);">
+            <!-- Invoice Header -->
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--dashboard-border);">
+              <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--dashboard-primary);">INVOICE</h1>
+                <p style="color: var(--dashboard-text-muted); font-size: 0.9rem;">${invoice.invoiceNumber}</p>
+              </div>
+              <div style="text-align: right;">
+                <h3 style="color: var(--dashboard-text); margin-bottom: 0.5rem;">Waarheid Marketing</h3>
+                <p style="color: var(--dashboard-text-muted); font-size: 0.85rem; line-height: 1.6;">
+                  Digital Marketing Agency<br>
+                  info@waarheid.nl<br>
+                  +31 20 123 4567
+                </p>
+              </div>
+            </div>
+
+            <!-- Bill To & Invoice Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+              <div>
+                <h4 style="color: var(--dashboard-primary); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Bill To:</h4>
+                <p style="color: var(--dashboard-text); line-height: 1.8; font-size: 0.95rem;">
+                  <strong>${client ? client.firstName + ' ' + client.lastName : 'N/A'}</strong><br>
+                  ${client ? client.company || '' : ''}<br>
+                  ${client ? client.email : ''}
+                </p>
+              </div>
+              <div>
+                <h4 style="color: var(--dashboard-primary); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Invoice Details:</h4>
+                <div style="line-height: 1.8; font-size: 0.95rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: var(--dashboard-text-muted);">Issue Date:</span>
+                    <strong style="color: var(--dashboard-text);">${issueDate.toLocaleDateString()}</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: var(--dashboard-text-muted);">Due Date:</span>
+                    <strong style="color: var(--dashboard-text);">${dueDate.toLocaleDateString()}</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--dashboard-text-muted);">Status:</span>
+                    <span class="invoice-status-${invoice.status}" style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">${invoice.status.toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Project Info -->
+            ${project ? `
+              <div style="background: rgba(197, 0, 119, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 3px solid var(--dashboard-primary);">
+                <p style="color: var(--dashboard-text); font-size: 0.95rem;">
+                  <strong>Project:</strong> ${project.title}
+                </p>
+              </div>
+            ` : ''}
+
+            <!-- Description -->
+            <div style="margin-bottom: 2rem;">
+              <h4 style="color: var(--dashboard-primary); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Description:</h4>
+              <p style="color: var(--dashboard-text); line-height: 1.6;">${invoice.description || 'Marketing services'}</p>
+            </div>
+
+            <!-- Amount -->
+            <div style="background: rgba(197, 0, 119, 0.1); padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: var(--dashboard-text); font-size: 1.2rem;">Total Amount:</h3>
+                <h2 style="color: var(--dashboard-primary); font-size: 2rem; font-weight: 700;">€${(invoice.amount || 0).toLocaleString()}</h2>
+              </div>
+            </div>
+
+            ${invoice.paidDate ? `
+              <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <p style="color: #10b981; font-size: 0.9rem; margin: 0;">
+                  <i class="fas fa-check-circle"></i> Paid on ${new Date(invoice.paidDate).toLocaleDateString()}
+                </p>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="ticket-modal-actions" style="margin-top: 1.5rem;">
+            <button class="btn-secondary" onclick="closeInvoiceViewModal()">
+              Close
+            </button>
+            <button class="btn-primary" onclick="downloadInvoice('${invoiceId}'); closeInvoiceViewModal();">
+              <i class="fas fa-download"></i> Download PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeInvoiceViewModal = function() {
+    const modal = document.getElementById('invoice-view-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
     }
   };
 
   window.downloadInvoice = function(invoiceId) {
-    alert('Download feature: This would download the invoice as a PDF. Demo mode only.');
+    const invoice = DataManager.invoices.getById(invoiceId);
+    if (!invoice) return;
+
+    const client = DataManager.clients.getById(invoice.clientId);
+    const project = invoice.projectId ? DataManager.projects.getById(invoice.projectId) : null;
+
+    // Create printable HTML content
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${invoice.invoiceNumber}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; padding: 40px; color: #333; background: white; }
+    .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #c50077; }
+    .company-info h1 { color: #c50077; font-size: 32px; margin-bottom: 10px; }
+    .invoice-info { text-align: right; }
+    .section { margin-bottom: 30px; }
+    .section h3 { color: #c50077; margin-bottom: 15px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+    .total-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 30px; }
+    .total-amount { font-size: 28px; color: #c50077; font-weight: bold; text-align: right; }
+    .status-badge { padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-paid { background: #d1fae5; color: #065f46; }
+    .status-overdue { background: #fee2e2; color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; color: #c50077; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="invoice-header">
+    <div class="company-info">
+      <h1>INVOICE</h1>
+      <p><strong>${invoice.invoiceNumber}</strong></p>
+    </div>
+    <div class="invoice-info">
+      <h2 style="color: #c50077; margin-bottom: 10px;">Waarheid Marketing</h2>
+      <p>Digital Marketing Agency</p>
+      <p>info@waarheid.nl</p>
+      <p>+31 20 123 4567</p>
+    </div>
+  </div>
+
+  <div class="details-grid">
+    <div class="section">
+      <h3>Bill To:</h3>
+      <p><strong>${client ? client.firstName + ' ' + client.lastName : 'N/A'}</strong></p>
+      <p>${client ? client.company || '' : ''}</p>
+      <p>${client ? client.email : ''}</p>
+    </div>
+    <div class="section">
+      <h3>Invoice Details:</h3>
+      <table style="border: none;">
+        <tr><td style="border: none;"><strong>Issue Date:</strong></td><td style="border: none;">${new Date(invoice.issueDate).toLocaleDateString()}</td></tr>
+        <tr><td style="border: none;"><strong>Due Date:</strong></td><td style="border: none;">${new Date(invoice.dueDate).toLocaleDateString()}</td></tr>
+        <tr><td style="border: none;"><strong>Status:</strong></td><td style="border: none;"><span class="status-badge status-${invoice.status}">${invoice.status.toUpperCase()}</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  ${project ? `
+    <div class="section" style="background: #fef3f2; padding: 15px; border-radius: 8px; border-left: 4px solid #c50077;">
+      <p><strong>Project:</strong> ${project.title}</p>
+    </div>
+  ` : ''}
+
+  <div class="section">
+    <h3>Description:</h3>
+    <p>${invoice.description || 'Marketing services'}</p>
+  </div>
+
+  <div class="total-section">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="color: #333;">Total Amount:</h3>
+      <div class="total-amount">€${(invoice.amount || 0).toLocaleString()}</div>
+    </div>
+  </div>
+
+  ${invoice.paidDate ? `
+    <div style="margin-top: 20px; padding: 15px; background: #d1fae5; border-radius: 8px; border: 1px solid #10b981;">
+      <p style="color: #065f46; font-weight: bold;">✓ Paid on ${new Date(invoice.paidDate).toLocaleDateString()}</p>
+    </div>
+  ` : ''}
+
+  <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+    <p>Thank you for your business!</p>
+    <p>If you have any questions, please contact us at info@waarheid.nl</p>
+  </div>
+</body>
+</html>
+    `;
+
+    // Create a new window and print
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
   window.payInvoice = function(invoiceId) {
