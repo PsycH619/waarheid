@@ -59,6 +59,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Programmatic navigation function
+  window.navigateToSection = function(sectionName) {
+    // Update active nav link
+    navLinks.forEach(l => l.classList.remove('active'));
+    const targetNavLink = document.querySelector(`.nav-link[data-section="${sectionName}"]`);
+    if (targetNavLink) {
+      targetNavLink.classList.add('active');
+    }
+
+    // Switch sections
+    const sections = document.querySelectorAll('.dashboard-section');
+    sections.forEach(s => s.classList.remove('active'));
+
+    const targetSection = document.getElementById('section-' + sectionName);
+    if (targetSection) {
+      targetSection.classList.add('active');
+
+      // Load section content
+      loadSectionContent(sectionName);
+    }
+  };
+
   // ============================================
   // Load Client Dashboard
   // ============================================
