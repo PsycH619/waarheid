@@ -3894,38 +3894,38 @@ document.addEventListener('DOMContentLoaded', function() {
             <form id="profile-form">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <div class="admin-form-group">
-                  <label>First Name</label>
+                  <label style="color: white;">First Name</label>
                   <input type="text" id="profile-firstname" value="${userData.firstName || ''}" readonly>
                 </div>
                 <div class="admin-form-group">
-                  <label>Last Name</label>
+                  <label style="color: white;">Last Name</label>
                   <input type="text" id="profile-lastname" value="${userData.lastName || ''}" readonly>
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <div class="admin-form-group">
-                  <label>Email Address</label>
+                  <label style="color: white;">Email Address</label>
                   <input type="email" id="profile-email" value="${userEmail}" readonly>
                 </div>
                 <div class="admin-form-group">
-                  <label>Phone Number</label>
+                  <label style="color: white;">Phone Number</label>
                   <input type="tel" id="profile-phone" value="${userData.phone || ''}" readonly>
                 </div>
               </div>
 
               <div class="admin-form-group" style="margin-bottom: 1.5rem;">
-                <label>Company/Organization</label>
+                <label style="color: white;">Company/Organization</label>
                 <input type="text" id="profile-company" value="${userData.company || ''}" readonly>
               </div>
 
               <div class="admin-form-group" style="margin-bottom: 1.5rem;">
-                <label>Address</label>
+                <label style="color: white;">Address</label>
                 <input type="text" id="profile-address" value="${userData.address || ''}" readonly>
               </div>
 
               <div class="admin-form-group">
-                <label>Bio</label>
+                <label style="color: white;">Bio</label>
                 <textarea id="profile-bio" rows="4" readonly>${userData.bio || ''}</textarea>
               </div>
             </form>
@@ -4023,15 +4023,15 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3 style="font-size: 1rem; margin: 0 0 1rem 0;">Change Password</h3>
             <form id="change-password-form" onsubmit="changePassword(event)">
               <div class="admin-form-group" style="margin-bottom: 1rem;">
-                <label>Current Password</label>
+                <label style="color: white;">Current Password</label>
                 <input type="password" id="current-password" required>
               </div>
               <div class="admin-form-group" style="margin-bottom: 1rem;">
-                <label>New Password</label>
+                <label style="color: white;">New Password</label>
                 <input type="password" id="new-password" required minlength="8">
               </div>
               <div class="admin-form-group" style="margin-bottom: 1rem;">
-                <label>Confirm New Password</label>
+                <label style="color: white;">Confirm New Password</label>
                 <input type="password" id="confirm-password" required>
               </div>
               <button type="submit" class="btn-admin">
@@ -4367,29 +4367,29 @@ document.addEventListener('DOMContentLoaded', function() {
         <form id="create-user-form" onsubmit="createUser(event)">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="admin-form-group">
-              <label>First Name *</label>
+              <label style="color: white;">First Name *</label>
               <input type="text" id="user-firstname" required>
             </div>
             <div class="admin-form-group">
-              <label>Last Name *</label>
+              <label style="color: white;">Last Name *</label>
               <input type="text" id="user-lastname" required>
             </div>
           </div>
 
           <div class="admin-form-group" style="margin-bottom: 1rem;">
-            <label>Email Address *</label>
+            <label style="color: white;">Email Address *</label>
             <input type="email" id="user-email" required>
           </div>
 
           <div class="admin-form-group" style="margin-bottom: 1rem;">
-            <label>Password *</label>
+            <label style="color: white;">Password *</label>
             <input type="password" id="user-password" required minlength="8">
             <small style="color: var(--dashboard-text-muted);">Minimum 8 characters</small>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="admin-form-group">
-              <label>Role *</label>
+              <label style="color: white;">Role *</label>
               <select id="user-role" required>
                 <option value="client">Client</option>
                 <option value="staff">Staff</option>
@@ -4398,7 +4398,7 @@ document.addEventListener('DOMContentLoaded', function() {
               </select>
             </div>
             <div class="admin-form-group">
-              <label>Status *</label>
+              <label style="color: white;">Status *</label>
               <select id="user-status" required>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -4407,12 +4407,12 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
 
           <div class="admin-form-group" style="margin-bottom: 1rem;">
-            <label>Phone</label>
+            <label style="color: white;">Phone</label>
             <input type="tel" id="user-phone">
           </div>
 
           <div class="admin-form-group">
-            <label>Company</label>
+            <label style="color: white;">Company</label>
             <input type="text" id="user-company">
           </div>
         </form>
@@ -4521,27 +4521,27 @@ document.addEventListener('DOMContentLoaded', function() {
         <form id="edit-user-form" onsubmit="saveUserChanges(event, '${userId}')">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="admin-form-group">
-              <label>First Name</label>
+              <label style="color: white;">First Name</label>
               <input type="text" id="edit-firstname" value="${user.firstName}" required>
             </div>
             <div class="admin-form-group">
-              <label>Last Name</label>
+              <label style="color: white;">Last Name</label>
               <input type="text" id="edit-lastname" value="${user.lastName}" required>
             </div>
           </div>
 
           <div class="admin-form-group" style="margin-bottom: 1rem;">
-            <label>Email</label>
+            <label style="color: white;">Email</label>
             <input type="email" id="edit-email" value="${user.email}" required>
           </div>
 
           <div class="admin-form-group" style="margin-bottom: 1rem;">
-            <label>Phone</label>
+            <label style="color: white;">Phone</label>
             <input type="tel" id="edit-phone" value="${user.phone || ''}">
           </div>
 
           <div class="admin-form-group">
-            <label>Company</label>
+            <label style="color: white;">Company</label>
             <input type="text" id="edit-company" value="${user.company || ''}">
           </div>
         </form>
@@ -4591,7 +4591,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="admin-modal-body">
         <div class="admin-form-group" style="margin-bottom: 2rem;">
-          <label>Role</label>
+          <label style="color: white;">Role</label>
           <select id="role-select" onchange="loadRolePermissions(this.value)">
             <option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option>
             <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
@@ -4609,7 +4609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="font-weight: 600; margin-bottom: 0.5rem; text-transform: capitalize;">${resource}</div>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                   ${['view', 'edit', 'delete'].map(action => `
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: white;">
                       <input type="checkbox"
                              class="perm-checkbox"
                              data-resource="${resource}"
