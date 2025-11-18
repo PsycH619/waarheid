@@ -115,18 +115,46 @@ document.addEventListener('DOMContentLoaded', function() {
         // For demo purposes, create account automatically
         // In production, this would make an API call to create the account
 
-        // Store user data (demo)
-        const userData = {
-          firstName,
-          lastName,
-          company,
-          email,
-          createdAt: new Date().toISOString()
-        };
+        // Check if DataManager is available
+        if (typeof DataManager !== 'undefined') {
+          // Create client in data manager
+          const client = DataManager.clients.create({
+            firstName,
+            lastName,
+            company,
+            email,
+            password: password // In production, this would be hashed
+          });
 
-        localStorage.setItem('userData', JSON.stringify(userData));
-        localStorage.setItem('authToken', 'demo_token_' + Date.now());
-        localStorage.setItem('userEmail', email);
+          // Store user data
+          const userData = {
+            clientId: client.id,
+            firstName,
+            lastName,
+            company,
+            email,
+            createdAt: new Date().toISOString()
+          };
+
+          localStorage.setItem('userData', JSON.stringify(userData));
+          localStorage.setItem('authToken', 'demo_token_' + Date.now());
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', 'client');
+        } else {
+          // Fallback if DataManager not loaded
+          const userData = {
+            firstName,
+            lastName,
+            company,
+            email,
+            createdAt: new Date().toISOString()
+          };
+
+          localStorage.setItem('userData', JSON.stringify(userData));
+          localStorage.setItem('authToken', 'demo_token_' + Date.now());
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', 'client');
+        }
 
         // Show success message
         showFormMessage('Account created successfully! Redirecting...', 'success');

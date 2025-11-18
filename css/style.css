@@ -413,6 +413,148 @@ p {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Auth Buttons in Header */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 1rem;
+}
+
+.btn-signin {
+  color: var(--color-white);
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-signin:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-signup {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-white);
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-signup:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* User Menu in Header */
+.user-menu-header {
+  position: relative;
+  margin-left: 1rem;
+}
+
+.user-menu-toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  padding: 0.4rem 1rem 0.4rem 0.4rem;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.user-menu-toggle-header:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-avatar-header {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c50077, #8b0055);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.85rem;
+}
+
+.user-name-header {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.user-menu-toggle-header i.fa-chevron-down {
+  font-size: 0.65rem;
+  margin-left: 0.2rem;
+  transition: transform 0.3s ease;
+}
+
+.user-menu-header.active .user-menu-toggle-header i.fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-header {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  background: #1a1a24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  min-width: 200px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.user-menu-header.active .user-dropdown-header {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown-header a {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.user-dropdown-header a:hover {
+  background: rgba(197, 0, 119, 0.1);
+  color: #c50077;
+}
+
+.user-dropdown-header a i {
+  width: 18px;
+  text-align: center;
+}
+
+.user-dropdown-header .dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
 /* ============================================
    Hero Section
    ============================================ */
