@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p style="color: var(--dashboard-text-muted); line-height: 1.6; margin-top: 1rem;">
           Have questions about this project? Send us a message and we'll get back to you shortly.
         </p>
-        <button class="btn-view-details" onclick="openMessaging()" style="margin-top: 1rem;">
+        <button class="btn-view-details" onclick="openMessaging('${project.id}', '${project.title.replace(/'/g, "\\'")}', '${(project.description || '').replace(/'/g, "\\'")}' )" style="margin-top: 1rem;">
           <i class="fas fa-comments"></i>
           Send Message
         </button>
@@ -411,9 +411,23 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Open messaging (placeholder - could open a messaging modal)
-  window.openMessaging = function() {
-    alert('Messaging feature: This would open a chat interface to communicate with the Waarheid Marketing team. For demo purposes, please contact us directly.');
+  window.openMessaging = function(projectId, projectTitle, projectDescription) {
+    // Close project detail modal
     window.closeProjectDetail();
+
+    // Navigate to messages section
+    navigateToSection('messages');
+
+    // Open new ticket modal with pre-filled information
+    setTimeout(() => {
+      openNewTicketModal({
+        category: 'project_inquiry',
+        subject: `Question about: ${projectTitle}`,
+        projectId: projectId,
+        projectTitle: projectTitle,
+        projectDescription: projectDescription
+      });
+    }, 300);
   };
 
   // ============================================
@@ -873,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTicketsList();
   }
 
-  function loadTicketsList() {
+  window.loadTicketsList = function() {
     // Reset view state
     currentView = 'list';
     currentTicketId = null;
@@ -1183,7 +1197,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // ============================================
   // New Ticket Modal
   // ============================================
-  window.openNewTicketModal = function() {
+  let currentTicketContext = null; // Store context for ticket creation
+
+  window.openNewTicketModal = function(prefillData = null) {
+    // Store prefill data for use in submitNewTicket
+    currentTicketContext = prefillData;
+
     // Create modal
     const modal = document.createElement('div');
     modal.id = 'new-ticket-modal';
@@ -1191,60 +1210,71 @@ document.addEventListener('DOMContentLoaded', function() {
     modal.innerHTML = `
       <div class="ticket-modal-container">
         <div class="ticket-modal-header">
-          <h2>Create New Support Ticket</h2>
+          <h2>${prefillData ? `Question about: ${prefillData.projectTitle}` : 'Create New Support Ticket'}</h2>
           <button class="modal-close-btn" onclick="closeNewTicketModal()">
             <i class="fas fa-times"></i>
           </button>
         </div>
         <div class="ticket-modal-body">
+          ${prefillData ? `
+            <div style="background: rgba(197, 0, 119, 0.1); border-left: 3px solid var(--dashboard-primary); padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+              <p style="color: var(--dashboard-text); font-size: 0.9rem; margin: 0;">
+                <i class="fas fa-info-circle" style="color: var(--dashboard-primary);"></i>
+                This ticket will be linked to your project: <strong>${prefillData.projectTitle}</strong>
+              </p>
+            </div>
+          ` : ''}
           <form id="new-ticket-form" onsubmit="submitNewTicket(event)">
-            <div class="form-group">
-              <label for="ticket-category">
-                <i class="fas fa-tag"></i> Category *
-              </label>
-              <select id="ticket-category" required>
-                <option value="">Select a category...</option>
-                <option value="project_inquiry">Project Inquiry</option>
-                <option value="billing">Billing Question</option>
-                <option value="technical_support">Technical Support</option>
-                <option value="feature_request">Feature Request</option>
-                <option value="general">General Question</option>
-              </select>
-            </div>
+            ${!prefillData ? `
+              <div class="form-group">
+                <label for="ticket-category">
+                  <i class="fas fa-tag"></i> Category *
+                </label>
+                <select id="ticket-category" required>
+                  <option value="">Select a category...</option>
+                  <option value="project_inquiry">Project Inquiry</option>
+                  <option value="billing">Billing Question</option>
+                  <option value="technical_support">Technical Support</option>
+                  <option value="feature_request">Feature Request</option>
+                  <option value="general">General Question</option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label for="ticket-priority">
-                <i class="fas fa-exclamation-circle"></i> Priority
-              </label>
-              <select id="ticket-priority">
-                <option value="normal">Normal</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
+              <div class="form-group">
+                <label for="ticket-priority">
+                  <i class="fas fa-exclamation-circle"></i> Priority
+                </label>
+                <select id="ticket-priority">
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label for="ticket-subject">
-                <i class="fas fa-heading"></i> Subject *
-              </label>
-              <input
-                type="text"
-                id="ticket-subject"
-                placeholder="Brief description of your issue or question"
-                required
-                maxlength="200"
-              />
-            </div>
+              <div class="form-group">
+                <label for="ticket-subject">
+                  <i class="fas fa-heading"></i> Subject *
+                </label>
+                <input
+                  type="text"
+                  id="ticket-subject"
+                  placeholder="Brief description of your issue or question"
+                  required
+                  maxlength="200"
+                />
+              </div>
+            ` : ''}
 
             <div class="form-group">
               <label for="ticket-message">
-                <i class="fas fa-comment"></i> Message *
+                <i class="fas fa-comment"></i> Your Message *
               </label>
               <textarea
                 id="ticket-message"
                 rows="6"
-                placeholder="Please provide details about your request..."
+                placeholder="${prefillData ? 'What would you like to know about this project?' : 'Please provide details about your request...'}"
                 required
+                autofocus
               ></textarea>
             </div>
 
@@ -1253,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Cancel
               </button>
               <button type="submit" class="btn-primary">
-                <i class="fas fa-paper-plane"></i> Create Ticket
+                <i class="fas fa-paper-plane"></i> ${prefillData ? 'Send Message' : 'Create Ticket'}
               </button>
             </div>
           </form>
@@ -1263,6 +1293,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
+
+    // Focus on message textarea after modal renders
+    setTimeout(() => {
+      const textarea = document.getElementById('ticket-message');
+      if (textarea) textarea.focus();
+    }, 100);
   };
 
   window.closeNewTicketModal = function() {
@@ -1271,19 +1307,37 @@ document.addEventListener('DOMContentLoaded', function() {
       modal.remove();
       document.body.style.overflow = '';
     }
+    // Clear context
+    currentTicketContext = null;
   };
 
   window.submitNewTicket = function(event) {
     event.preventDefault();
 
-    const category = document.getElementById('ticket-category').value;
-    const priority = document.getElementById('ticket-priority').value;
-    const subject = document.getElementById('ticket-subject').value.trim();
     const message = document.getElementById('ticket-message').value.trim();
 
-    if (!category || !subject || !message) {
-      alert('Please fill in all required fields');
+    if (!message) {
+      alert('Please enter a message');
       return;
+    }
+
+    let category, priority, subject;
+
+    // Check if we have pre-filled context (from project)
+    if (currentTicketContext) {
+      category = currentTicketContext.category;
+      priority = 'normal';
+      subject = currentTicketContext.subject;
+    } else {
+      // Get values from form
+      category = document.getElementById('ticket-category').value;
+      priority = document.getElementById('ticket-priority').value;
+      subject = document.getElementById('ticket-subject').value.trim();
+
+      if (!category || !subject) {
+        alert('Please fill in all required fields');
+        return;
+      }
     }
 
     // Create ticket
