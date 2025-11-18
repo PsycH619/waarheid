@@ -326,36 +326,34 @@
           const email = document.getElementById('modal-signin-email').value;
           const password = document.getElementById('modal-signin-password').value;
 
-          // Demo authentication
-          if (typeof DataManager !== 'undefined') {
-            const client = DataManager.clients.getByEmail(email);
-
-            if (client && client.password === password) {
-              // Client login
-              localStorage.setItem('authToken', 'client_token_' + Date.now());
-              localStorage.setItem('userEmail', email);
-              localStorage.setItem('userRole', 'client');
-              localStorage.setItem('userData', JSON.stringify({
-                clientId: client.id,
-                firstName: client.firstName,
-                lastName: client.lastName,
-                email: client.email,
-                company: client.company
-              }));
-
-              WaarheidAuth.closeAuthModal();
-              window.location.href = 'dashboard.html';
-              return;
-            }
+          // Validate credentials against database
+          if (typeof DataManager === 'undefined') {
+            alert('Error: Database not initialized. Please refresh the page.');
+            return;
           }
 
-          // Fallback - accept any credentials
-          localStorage.setItem('authToken', 'demo_token_' + Date.now());
+          const client = DataManager.clients.getByEmail(email);
+
+          if (!client) {
+            alert('Invalid email or password. Please try again.\n\nDemo accounts:\n- john@example.com / password123\n- sarah@example.com / password123\n- mike@example.com / password123');
+            return;
+          }
+
+          if (client.password !== password) {
+            alert('Invalid email or password. Please try again.');
+            return;
+          }
+
+          // Successful login
+          localStorage.setItem('authToken', 'client_token_' + Date.now());
           localStorage.setItem('userEmail', email);
           localStorage.setItem('userRole', 'client');
           localStorage.setItem('userData', JSON.stringify({
-            firstName: email.split('@')[0],
-            email: email
+            clientId: client.id,
+            firstName: client.firstName,
+            lastName: client.lastName,
+            email: client.email,
+            company: client.company
           }));
 
           WaarheidAuth.closeAuthModal();
@@ -386,15 +384,28 @@
             return;
           }
 
+          // Validate database is available
+          if (typeof DataManager === 'undefined') {
+            alert('Error: Database not initialized. Please refresh the page.');
+            return;
+          }
+
+          // Check if email already exists
+          const existingClient = DataManager.clients.getByEmail(email);
+          if (existingClient) {
+            alert('An account with this email already exists. Please sign in instead.');
+            WaarheidAuth.switchAuthTab('signin');
+            return;
+          }
+
           // Create client in data manager
-          if (typeof DataManager !== 'undefined') {
-            const client = DataManager.clients.create({
-              firstName,
-              lastName,
-              company,
-              email,
-              password: password
-            });
+          const client = DataManager.clients.create({
+            firstName,
+            lastName,
+            company,
+            email,
+            password: password
+          });
 
             localStorage.setItem('userData', JSON.stringify({
               clientId: client.id,
