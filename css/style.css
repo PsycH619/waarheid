@@ -427,6 +427,9 @@ p {
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+  display: inline-block;
+  min-width: 200px;
+  text-align: center;
 }
 
 .btn-book::before {
