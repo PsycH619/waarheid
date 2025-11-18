@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Our Portfolio - Case Studies and Success Stories">
+  <title>Portfolio - Waarheid Marketing</title>
+
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/enhanced.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header scrolled">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span>Waarheid</span>
+      </a>
+
+      <nav class="nav-menu">
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html" class="active">Portfolio</a>
+        <a href="about.html">About</a>
+        <a href="index.html#industries">Industries</a>
+        <a href="booking.html" class="btn btn-primary" style="margin-left: 1rem; padding: 0.6rem 1.5rem;">Book Consultation</a>
+      </nav>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <section class="hero" style="min-height: 65vh; padding-top: 120px;">
+    <div class="hero-image-bg" style="background-image: url('images/2024/11/Background3.png');"></div>
+    <div class="container">
+      <h1 style="color: white; text-align: center;">Our Portfolio</h1>
+      <p style="text-align: center; max-width: 700px; margin: 0 auto; color: rgba(255,255,255,0.85); font-size: 1.2rem;">
+        Real results for real businesses. Explore our case studies and success stories.
+      </p>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" data-count="50" data-suffix="+">0+</div>
+          <div class="stat-label">Projects Completed</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="300" data-suffix="%">0%</div>
+          <div class="stat-label">Average Growth</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="98" data-suffix="%">0%</div>
+          <div class="stat-label">Client Satisfaction</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="15" data-suffix="+">0+</div>
+          <div class="stat-label">Industries Served</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter Bar -->
+  <section class="section section-light">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 2rem;">Case Studies</h2>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All Projects</button>
+        <button class="filter-btn" data-filter="marketing">Marketing</button>
+        <button class="filter-btn" data-filter="development">Web Development</button>
+        <button class="filter-btn" data-filter="automation">Automation</button>
+        <button class="filter-btn" data-filter="food">Food & Hospitality</button>
+        <button class="filter-btn" data-filter="ecommerce">E-commerce</button>
+        <button class="filter-btn" data-filter="b2b">B2B Services</button>
+      </div>
+
+      <!-- Portfolio Grid -->
+      <div class="portfolio-grid">
+
+        <!-- Project 1: Broodje & Co -->
+        <div class="portfolio-card" data-categories="marketing,development,food"
+             data-case-study='{
+               "title": "Broodje & Co - 300% Sales Growth",
+               "overview": "Complete digital transformation for a local sandwich chain looking to expand their online presence and implement digital ordering.",
+               "challenge": "Broodje & Co had minimal online visibility, no digital ordering system, and relied entirely on walk-in customers. They wanted to expand reach and modernize operations.",
+               "solution": "We built a custom website with integrated online ordering, launched targeted Google and Meta ad campaigns, optimized for local SEO, and created engaging social media content with professional food photography.",
+               "results": [
+                 {"value": "+300%", "label": "Online Sales"},
+                 {"value": "+150%", "label": "Customer Base"},
+                 {"value": "4.9★", "label": "Customer Rating"},
+                 {"value": "#1", "label": "Local Search Rank"}
+               ],
+               "images": ["images/2024/11/3.png"]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/3.png" alt="Broodje & Co">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">Food & Hospitality</span>
+              <span class="portfolio-tag">Marketing</span>
+              <span class="portfolio-tag">Web Dev</span>
+            </div>
+            <h4>Broodje & Co</h4>
+            <p>Complete digital transformation with custom ordering system and integrated marketing campaigns</p>
+            <div class="portfolio-card-result">+300% Online Sales</div>
+          </div>
+        </div>
+
+        <!-- Project 2: Beef & Rib Paradise -->
+        <div class="portfolio-card" data-categories="marketing,branding,food"
+             data-case-study='{
+               "title": "Beef & Rib Paradise - Digital Restaurant Marketing",
+               "overview": "Full brand refresh and digital marketing strategy for an upscale steakhouse.",
+               "challenge": "Outdated website, inconsistent branding, and limited online reservations. Competing with chain restaurants.",
+               "solution": "Brand identity refresh, modern responsive website, professional food photography, local SEO optimization, and targeted social media campaigns showcasing their premium offerings.",
+               "results": [
+                 {"value": "+200%", "label": "Web Traffic"},
+                 {"value": "+80%", "label": "Online Reservations"},
+                 {"value": "#1", "label": "Local Rankings"},
+                 {"value": "€15K", "label": "Monthly Revenue Increase"}
+               ],
+               "images": ["images/2024/11/cons.jpg"]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/cons.jpg" alt="Beef & Rib Paradise">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">Food & Hospitality</span>
+              <span class="portfolio-tag">Branding</span>
+            </div>
+            <h4>Beef & Rib Paradise</h4>
+            <p>Brand refresh and comprehensive digital marketing transformation</p>
+            <div class="portfolio-card-result">+200% Web Traffic</div>
+          </div>
+        </div>
+
+        <!-- Project 3: Ter Locht Ceramics -->
+        <div class="portfolio-card" data-categories="ecommerce,development,marketing"
+             data-case-study='{
+               "title": "Ter Locht Ceramics - E-commerce Success",
+               "overview": "Built a complete e-commerce platform for artisan ceramic products, transforming a local workshop into an international online store.",
+               "challenge": "No online sales channel, limited market reach, manual order processing, and no digital presence beyond social media.",
+               "solution": "Custom e-commerce website with product catalog, payment integration, inventory management, professional product photography, SEO optimization, and digital advertising campaigns.",
+               "results": [
+                 {"value": "€50K+", "label": "Monthly Revenue"},
+                 {"value": "+500%", "label": "Market Reach"},
+                 {"value": "98%", "label": "Customer Satisfaction"},
+                 {"value": "35+", "label": "Countries Reached"}
+               ],
+               "images": ["images/2024/11/bi.jpg"]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/bi.jpg" alt="Ter Locht Ceramics">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">E-commerce</span>
+              <span class="portfolio-tag">Web Development</span>
+            </div>
+            <h4>Ter Locht Ceramics</h4>
+            <p>Custom e-commerce platform driving €50K+ monthly revenue and international reach</p>
+            <div class="portfolio-card-result">€50K+ Monthly</div>
+          </div>
+        </div>
+
+        <!-- Project 4: Al Maidan -->
+        <div class="portfolio-card" data-categories="marketing,food"
+             data-case-study='{
+               "title": "Al Maidan - Social Media Growth",
+               "overview": "Social media marketing and content creation for Mediterranean restaurant.",
+               "challenge": "Low social media engagement, inconsistent posting, and difficulty showcasing authentic cuisine online.",
+               "solution": "Content calendar strategy, professional food photography and videography, daily social media management, influencer partnerships, and paid social campaigns.",
+               "results": [
+                 {"value": "+400%", "label": "Instagram Followers"},
+                 {"value": "+250%", "label": "Engagement Rate"},
+                 {"value": "50K+", "label": "Monthly Reach"},
+                 {"value": "+60%", "label": "Walk-in Traffic"}
+               ]
+             }'>
+          <div class="portfolio-card-media">
+            <div style="width: 100%; height: 260px; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-utensils" style="font-size: 4rem; color: white; opacity: 0.5;"></i>
+            </div>
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">Food & Hospitality</span>
+              <span class="portfolio-tag">Marketing</span>
+            </div>
+            <h4>Al Maidan</h4>
+            <p>Social media transformation driving massive engagement and foot traffic growth</p>
+            <div class="portfolio-card-result">+400% Instagram Growth</div>
+          </div>
+        </div>
+
+        <!-- Project 5: Manufacturing Dashboard -->
+        <div class="portfolio-card" data-categories="automation,development,b2b"
+             data-case-study='{
+               "title": "Manufacturing Operations Dashboard",
+               "overview": "Real-time operations dashboard for mid-sized manufacturing company tracking production, inventory, and quality metrics.",
+               "challenge": "Manual data collection, delayed reporting, no real-time visibility into operations, and inefficient resource allocation.",
+               "solution": "Custom dashboard with IoT sensor integration, automated data collection, real-time visualization, predictive maintenance alerts, and mobile access for managers.",
+               "results": [
+                 {"value": "-35%", "label": "Downtime Reduction"},
+                 {"value": "+25%", "label": "Productivity Increase"},
+                 {"value": "€120K", "label": "Annual Savings"},
+                 {"value": "Real-time", "label": "Data Visibility"}
+               ],
+               "images": ["images/2024/11/BI.png"]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/BI.png" alt="Manufacturing Dashboard">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">B2B</span>
+              <span class="portfolio-tag">Automation</span>
+            </div>
+            <h4>Manufacturing Dashboard</h4>
+            <p>IoT-powered operations dashboard delivering real-time insights and €120K annual savings</p>
+            <div class="portfolio-card-result">€120K Saved Annually</div>
+          </div>
+        </div>
+
+        <!-- Project 6: Professional Services Firm -->
+        <div class="portfolio-card" data-categories="development,b2b,automation"
+             data-case-study='{
+               "title": "Professional Services - Client Portal",
+               "overview": "Custom client portal for consulting firm to streamline project management and client communication.",
+               "challenge": "Email overload, scattered project files, manual status updates, and time-consuming client reporting.",
+               "solution": "Built secure client portal with project dashboards, file sharing, automated reports, messaging system, and integration with existing tools.",
+               "results": [
+                 {"value": "-60%", "label": "Email Volume"},
+                 {"value": "+40%", "label": "Client Satisfaction"},
+                 {"value": "15hrs", "label": "Weekly Time Saved"},
+                 {"value": "100%", "label": "Adoption Rate"}
+               ]
+             }'>
+          <div class="portfolio-card-media">
+            <div style="width: 100%; height: 260px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-users-cog" style="font-size: 4rem; color: white; opacity: 0.5;"></i>
+            </div>
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">B2B</span>
+              <span class="portfolio-tag">Web Development</span>
+            </div>
+            <h4>Client Portal System</h4>
+            <p>Custom portal saving 15 hours weekly and improving client satisfaction by 40%</p>
+            <div class="portfolio-card-result">15hrs Saved Weekly</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="section section-dark">
+    <div class="container" style="text-align: center;">
+      <h2 style="color: white; margin-bottom: 1rem;">Want Results Like These?</h2>
+      <p style="color: rgba(255,255,255,0.7); margin-bottom: 2rem; max-width: 650px; margin-left: auto; margin-right: auto;">
+        Every project starts with understanding your goals. Let's discuss how we can create similar success for your business.
+      </p>
+      <a href="booking.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+        <i class="fas fa-calendar-check"></i> Book Your Free Consultation
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Waarheid Marketing</h3>
+          <p>Marketing & Digitalization Agency</p>
+          <div class="social-links">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h3>Services</h3>
+          <a href="category-marketing.html">Marketing & Branding</a>
+          <a href="category-development.html">Web & App Development</a>
+          <a href="category-automation.html">Automation & BI</a>
+        </div>
+
+        <div class="footer-section">
+          <h3>Company</h3>
+          <a href="about.html">About Us</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="booking.html">Book Consultation</a>
+        </div>
+
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p><i class="fas fa-envelope"></i> info@waarheidmarketing.com</p>
+          <p><i class="fas fa-phone"></i> +32 123 456 789</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 Waarheid Marketing. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="scroll-to-top">
+    <i class="fas fa-arrow-up"></i>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/enhanced.js"></script>
+</body>
+</html>

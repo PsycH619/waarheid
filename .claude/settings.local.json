@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(php:*)",
+      "Bash(temp-dev.html)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

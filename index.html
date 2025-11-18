@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Waarheid Marketing - Marketing & Digitalization Agency. We help businesses grow with clarity, creativity, and modern technology.">
+  <title>Waarheid Marketing - Visual-First Agency</title>
+
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/enhanced.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header / Navigation -->
+  <header class="header">
+    <div class="container">
+      <a href="index-new.html" class="logo">
+        <span>Waarheid</span>
+      </a>
+
+      <nav class="nav-menu">
+        <a href="#home" class="active">Home</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="about.html">About</a>
+        <a href="#industries">Industries</a>
+        <a href="booking.html" class="btn btn-primary" style="margin-left: 1rem; padding: 0.6rem 1.5rem;">Book Consultation</a>
+      </nav>
+
+      <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section with Video Background -->
+  <section id="home" class="hero">
+    <!-- Background Video (Optional - uncomment and add your video) -->
+    <!-- <video class="hero-video-bg" autoplay muted loop playsinline>
+      <source src="videos/hero-background.mp4" type="video/mp4">
+    </video> -->
+
+    <!-- Or Background Image -->
+    <div class="hero-image-bg" style="background-image: url('images/2024/11/Background3.png');"></div>
+
+    <div class="container">
+      <p class="tagline">Marketing & Digitalization</p>
+      <h1>An Agency Built to <span class="text-gradient">CREATE REAL VALUE</span></h1>
+      <p>We're a nimble, hungry, results-driven growth partner. We execute with purpose and focus on measurable, actionable results that transform businesses.</p>
+
+      <div class="cta-buttons">
+        <a href="booking.html" class="btn btn-primary">
+          <i class="fas fa-calendar-check"></i> Book a Consultation
+        </a>
+        <a href="#services" class="btn btn-outline-white">
+          <i class="fas fa-arrow-down"></i> Explore Services
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core of Waarheid (What We Do) -->
+  <section class="section">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 1rem;">The Core of Waarheid</h2>
+      <p style="text-align: center; max-width: 700px; margin: 0 auto 3rem; color: var(--color-text-light); font-size: 1.1rem;">
+        We bridge strategy, design, content, and intelligent systems to elevate brands and streamline business operations.
+      </p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" data-count="360">0</div>
+          <div class="stat-label">Full-Service Approach</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="100" data-suffix="%">0%</div>
+          <div class="stat-label">Results-Driven</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="50" data-suffix="+">0+</div>
+          <div class="stat-label">Happy Clients</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" data-count="3">0</div>
+          <div class="stat-label">Core Services</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Three Main Category Cards (Visual-First) -->
+  <section id="services" class="section section-light">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 1rem;">What We Do</h2>
+      <p style="text-align: center; max-width: 800px; margin: 0 auto 3rem; color: var(--color-text-light);">
+        Choose a service category to explore how we can help transform your business
+      </p>
+
+      <div class="category-cards">
+        <!-- Marketing & Branding -->
+        <div class="category-card" onclick="window.location.href='category-marketing.html'">
+          <div class="category-card-image">
+            <img src="images/2024/11/brand.jpg" alt="Marketing & Branding">
+            <!-- Optional: Hover Video -->
+            <!-- <video class="category-card-video" muted loop>
+              <source src="videos/marketing-preview.mp4" type="video/mp4">
+            </video> -->
+          </div>
+          <div class="category-card-content">
+            <h3><i class="fas fa-bullhorn" style="color: var(--color-primary); margin-right: 0.5rem;"></i> Marketing & Branding</h3>
+            <ul class="category-card-bullets">
+              <li>Build trust and attract new customers</li>
+              <li>SEO, paid ads, and social media dominance</li>
+              <li>Creative campaigns with real ROI</li>
+            </ul>
+            <a href="category-marketing.html" class="btn btn-outline">View Services</a>
+          </div>
+        </div>
+
+        <!-- Web & App Development -->
+        <div class="category-card" onclick="window.location.href='category-development.html'">
+          <div class="category-card-image">
+            <img src="images/2024/11/fill-image14.jpg" alt="Web & App Development">
+          </div>
+          <div class="category-card-content">
+            <h3><i class="fas fa-laptop-code" style="color: var(--color-primary); margin-right: 0.5rem;"></i> Web & App Development</h3>
+            <ul class="category-card-bullets">
+              <li>Fast, beautiful websites that convert</li>
+              <li>Mobile apps and custom platforms</li>
+              <li>E-commerce and booking systems</li>
+            </ul>
+            <a href="category-development.html" class="btn btn-outline">View Services</a>
+          </div>
+        </div>
+
+        <!-- Automation & BI -->
+        <div class="category-card" onclick="window.location.href='category-automation.html'">
+          <div class="category-card-image">
+            <img src="images/2024/11/BI.png" alt="Automation & Business Intelligence">
+          </div>
+          <div class="category-card-content">
+            <h3><i class="fas fa-brain" style="color: var(--color-primary); margin-right: 0.5rem;"></i> Automation & Business Intelligence</h3>
+            <ul class="category-card-bullets">
+              <li>Reduce manual work, increase accuracy</li>
+              <li>Real-time dashboards and insights</li>
+              <li>IoT, cloud systems, and integrations</li>
+            </ul>
+            <a href="category-automation.html" class="btn btn-outline">View Services</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Industries We Work With -->
+  <section id="industries" class="section">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 1rem;">Industries We Serve</h2>
+      <p style="text-align: center; max-width: 700px; margin: 0 auto 2rem; color: var(--color-text-light);">
+        Specialized expertise across multiple sectors
+      </p>
+
+      <div class="industries-grid">
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <h4>Food & Hospitality</h4>
+          <p>Restaurants, cafes, and food services</p>
+        </div>
+
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-shopping-bag"></i>
+          </div>
+          <h4>E-commerce & Retail</h4>
+          <p>Online stores and retail businesses</p>
+        </div>
+
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <h4>Healthcare & Wellness</h4>
+          <p>Medical practices and wellness centers</p>
+        </div>
+
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <h4>Professional Services</h4>
+          <p>Consulting, legal, and B2B services</p>
+        </div>
+
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-hammer"></i>
+          </div>
+          <h4>Manufacturing</h4>
+          <p>Production and industrial businesses</p>
+        </div>
+
+        <div class="industry-card">
+          <div class="industry-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h4>Education & Training</h4>
+          <p>Schools, courses, and training programs</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portfolio / Case Studies Preview -->
+  <section class="section section-dark">
+    <div class="container">
+      <h2 style="text-align: center; color: white; margin-bottom: 1rem;">Success Stories</h2>
+      <p style="text-align: center; color: rgba(255,255,255,0.7); max-width: 700px; margin: 0 auto 3rem;">
+        Real results for real businesses. See how we've helped our clients grow.
+      </p>
+
+      <div class="portfolio-grid">
+        <!-- Case Study 1 -->
+        <div class="portfolio-card"
+             data-case-study='{
+               "title": "Broodje & Co - 300% Sales Growth",
+               "overview": "Complete digital transformation for a local food chain.",
+               "challenge": "Low online visibility and no digital ordering system.",
+               "solution": "Built custom website, implemented online ordering, launched targeted ad campaigns.",
+               "results": [
+                 {"value": "+300%", "label": "Online Sales"},
+                 {"value": "+150%", "label": "Customer Base"},
+                 {"value": "4.9★", "label": "Customer Rating"}
+               ],
+               "images": ["images/2024/11/3.png"]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/3.png" alt="Broodje & Co Project">
+            <!-- <div class="portfolio-play-btn"><i class="fas fa-play"></i></div> -->
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">Food & Hospitality</span>
+              <span class="portfolio-tag">Web Development</span>
+            </div>
+            <h4>Broodje & Co</h4>
+            <p>Complete digital transformation with custom ordering system</p>
+            <div class="portfolio-card-result">+300% Online Sales</div>
+          </div>
+        </div>
+
+        <!-- Case Study 2 -->
+        <div class="portfolio-card"
+             data-case-study='{
+               "title": "Beef & Rib Paradise - Digital Expansion",
+               "overview": "Modern website and comprehensive marketing strategy.",
+               "challenge": "Outdated website and limited digital presence.",
+               "solution": "Brand refresh, new website, social media campaigns, and local SEO.",
+               "results": [
+                 {"value": "+200%", "label": "Web Traffic"},
+                 {"value": "+80%", "label": "Reservations"},
+                 {"value": "#1", "label": "Local Rankings"}
+               ]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/cons.jpg" alt="Beef & Rib Paradise">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">Marketing</span>
+              <span class="portfolio-tag">Branding</span>
+            </div>
+            <h4>Beef & Rib Paradise</h4>
+            <p>Brand refresh and digital marketing transformation</p>
+            <div class="portfolio-card-result">+200% Web Traffic</div>
+          </div>
+        </div>
+
+        <!-- Case Study 3 -->
+        <div class="portfolio-card"
+             data-case-study='{
+               "title": "Ter Locht Ceramics - E-commerce Success",
+               "overview": "Built a custom e-commerce platform for artisan ceramics.",
+               "challenge": "No online sales channel, limited market reach.",
+               "solution": "Custom e-commerce website, product photography, digital marketing.",
+               "results": [
+                 {"value": "€50K+", "label": "Monthly Revenue"},
+                 {"value": "+500%", "label": "Market Reach"},
+                 {"value": "98%", "label": "Customer Satisfaction"}
+               ]
+             }'>
+          <div class="portfolio-card-media">
+            <img src="images/2024/11/bi.jpg" alt="Ter Locht Ceramics">
+          </div>
+          <div class="portfolio-card-content">
+            <div class="portfolio-card-meta">
+              <span class="portfolio-tag">E-commerce</span>
+              <span class="portfolio-tag">Web Development</span>
+            </div>
+            <h4>Ter Locht Ceramics</h4>
+            <p>Custom e-commerce platform driving €50K+ monthly revenue</p>
+            <div class="portfolio-card-result">€50K+ Monthly</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 3rem;">
+        <a href="portfolio.html" class="btn btn-outline-white">
+          <i class="fas fa-folder-open"></i> View All Case Studies
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section" style="background: linear-gradient(135deg, var(--color-light) 0%, #e8e0f7 100%);">
+    <div class="container" style="text-align: center;">
+      <h2 style="margin-bottom: 1rem;">Ready to Transform Your Business?</h2>
+      <p style="max-width: 600px; margin: 0 auto 2rem; color: var(--color-text-light); font-size: 1.1rem;">
+        Let's discuss how we can help you grow with clarity, creativity, and modern technology.
+      </p>
+      <a href="booking.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+        <i class="fas fa-calendar-check"></i> Book Your Free Consultation
+      </a>
+      <p style="margin-top: 1.5rem; color: var(--color-text-light); font-size: 0.9rem;">
+        <i class="fas fa-check-circle" style="color: var(--color-primary);"></i> No commitment required
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <i class="fas fa-clock" style="color: var(--color-primary);"></i> 30-minute strategy session
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Waarheid Marketing</h3>
+          <p>Marketing & Digitalization Agency</p>
+          <p>Empowering businesses to grow smarter — not harder.</p>
+
+          <div class="social-links">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h3>Services</h3>
+          <a href="category-marketing.html">Marketing & Branding</a>
+          <a href="category-development.html">Web & App Development</a>
+          <a href="category-automation.html">Automation & BI</a>
+          <a href="services.html">All Services</a>
+        </div>
+
+        <div class="footer-section">
+          <h3>Company</h3>
+          <a href="about.html">About Us</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="booking.html">Book Consultation</a>
+          <a href="#industries">Industries</a>
+        </div>
+
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p><i class="fas fa-envelope"></i> info@waarheidmarketing.com</p>
+          <p><i class="fas fa-phone"></i> +32 123 456 789</p>
+          <p><i class="fas fa-map-marker-alt"></i> Belgium</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 Waarheid Marketing. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll to Top Button -->
+  <div class="scroll-to-top">
+    <i class="fas fa-arrow-up"></i>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script src="js/enhanced.js"></script>
+</body>
+</html>

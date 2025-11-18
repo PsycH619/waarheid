@@ -1,0 +1,12 @@
+# Waarheid Marketing - robots.txt
+# Allow all search engines to crawl the site
+
+User-agent: *
+Allow: /
+
+# Disallow access to certain directories
+Disallow: /logs/
+Disallow: /public_html/
+
+# Sitemap location
+Sitemap: https://waarheidmarketing.com/sitemap.xml
