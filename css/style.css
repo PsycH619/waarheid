@@ -417,7 +417,7 @@ p {
 .btn-book {
   background: linear-gradient(135deg, #c50077 0%, #8b0055 100%);
   color: var(--color-white);
-  padding: 0.7rem 2rem;
+  padding: 0.7rem 2.5rem;
   border-radius: 50px;
   font-weight: 600;
   font-size: 0.85rem;
