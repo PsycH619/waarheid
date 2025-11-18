@@ -1165,7 +1165,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Projects Section
   // ============================================
   function loadProjects() {
-    const projects = DataManager.projects.getAll();
+    const allProjects = DataManager.projects.getAll();
+    const clients = DataManager.clients.getAll();
+
+    // Get unique categories and statuses for filters
+    const categories = [...new Set(allProjects.map(p => p.category).filter(Boolean))];
+    const statuses = [...new Set(allProjects.map(p => p.status))];
 
     mainContent.innerHTML = `
       <div class="admin-action-bar">
@@ -1178,66 +1183,535 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
 
-      ${projects.length === 0 ? `
+      ${allProjects.length === 0 ? `
         <div class="empty-state">
           <i class="fas fa-briefcase"></i>
           <h3>No Projects</h3>
           <p>Click "New Project" to create your first project</p>
         </div>
       ` : `
-        <div class="admin-table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Client</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Progress</th>
-                <th>Budget</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${projects.map(p => {
-                const client = p.clientId ? DataManager.clients.getById(p.clientId) : null;
-                return `
-                  <tr>
-                    <td><strong>${p.title}</strong></td>
-                    <td>${client ? client.firstName + ' ' + client.lastName : '<span style="color: #f59e0b;">Unassigned</span>'}</td>
-                    <td>${p.category || 'N/A'}</td>
-                    <td><span class="status-badge ${p.status}">${p.status.replace('_', ' ')}</span></td>
-                    <td>
-                      <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                          <div style="width: ${p.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
-                        </div>
-                        <span style="font-size: 0.8rem;">${p.progress}%</span>
-                      </div>
-                    </td>
-                    <td>€${(p.budget || 0).toLocaleString()}</td>
-                    <td>
-                      <div class="table-actions">
-                        <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon" onclick="assignClient('${p.id}')" title="Assign Client">
-                          <i class="fas fa-user-plus"></i>
-                        </button>
-                        <button class="btn-icon danger" onclick="deleteProject('${p.id}')" title="Delete">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+        <!-- Search and Filter Section -->
+        <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-search"></i> Search</label>
+              <input type="text" id="project-search" placeholder="Search by project name..." onkeyup="filterProjects()">
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-user"></i> Client</label>
+              <select id="project-client-filter" onchange="filterProjects()">
+                <option value="">All Clients</option>
+                ${clients.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}
+                <option value="unassigned">Unassigned</option>
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-folder"></i> Category</label>
+              <select id="project-category-filter" onchange="filterProjects()">
+                <option value="">All Categories</option>
+                ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-flag"></i> Status</label>
+              <select id="project-status-filter" onchange="filterProjects()">
+                <option value="">All Statuses</option>
+                ${statuses.map(status => `<option value="${status}">${status.replace('_', ' ')}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-sort"></i> Sort By</label>
+              <select id="project-sort" onchange="filterProjects()">
+                <option value="name">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="budget-high">Budget (High to Low)</option>
+                <option value="budget-low">Budget (Low to High)</option>
+                <option value="progress-high">Progress (High to Low)</option>
+                <option value="progress-low">Progress (Low to High)</option>
+                <option value="date-new">Date (Newest First)</option>
+                <option value="date-old">Date (Oldest First)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: flex-end;">
+              <button class="btn-admin secondary" onclick="clearProjectFilters()" style="width: 100%;">
+                <i class="fas fa-undo"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="projects-table-container">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Client</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                  <th>Budget</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="projects-table-body">
+                ${renderProjectRows(allProjects)}
+              </tbody>
+            </table>
+          </div>
         </div>
       `}
     `;
   }
+
+  function renderProjectRows(projects) {
+    if (projects.length === 0) {
+      return `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+            No projects match your filters
+          </td>
+        </tr>
+      `;
+    }
+
+    return projects.map(p => {
+      const client = p.clientId ? DataManager.clients.getById(p.clientId) : null;
+      return `
+        <tr onclick="viewProjectDetails('${p.id}')" style="cursor: pointer;" onmouseover="this.style.background='rgba(197, 0, 119, 0.05)'" onmouseout="this.style.background=''">
+          <td><strong>${p.title}</strong></td>
+          <td>${client ? client.firstName + ' ' + client.lastName : '<span style="color: #f59e0b;">Unassigned</span>'}</td>
+          <td>${p.category || 'N/A'}</td>
+          <td><span class="status-badge ${p.status}">${p.status.replace('_', ' ')}</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                <div style="width: ${p.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
+              </div>
+              <span style="font-size: 0.8rem;">${p.progress}%</span>
+            </div>
+          </td>
+          <td>€${(p.budget || 0).toLocaleString()}</td>
+          <td>
+            <div class="table-actions" onclick="event.stopPropagation()">
+              <button class="btn-icon" onclick="viewProjectDetails('${p.id}')" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-icon" onclick="assignClient('${p.id}')" title="Assign Client">
+                <i class="fas fa-user-plus"></i>
+              </button>
+              <button class="btn-icon danger" onclick="deleteProject('${p.id}')" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.filterProjects = function() {
+    const searchTerm = document.getElementById('project-search').value.toLowerCase();
+    const clientFilter = document.getElementById('project-client-filter').value;
+    const categoryFilter = document.getElementById('project-category-filter').value;
+    const statusFilter = document.getElementById('project-status-filter').value;
+    const sortBy = document.getElementById('project-sort').value;
+
+    let projects = DataManager.projects.getAll();
+
+    // Apply search filter
+    if (searchTerm) {
+      projects = projects.filter(p => p.title.toLowerCase().includes(searchTerm));
+    }
+
+    // Apply client filter
+    if (clientFilter) {
+      if (clientFilter === 'unassigned') {
+        projects = projects.filter(p => !p.clientId);
+      } else {
+        projects = projects.filter(p => p.clientId === clientFilter);
+      }
+    }
+
+    // Apply category filter
+    if (categoryFilter) {
+      projects = projects.filter(p => p.category === categoryFilter);
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      projects = projects.filter(p => p.status === statusFilter);
+    }
+
+    // Apply sorting
+    switch(sortBy) {
+      case 'name':
+        projects.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        projects.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'budget-high':
+        projects.sort((a, b) => (b.budget || 0) - (a.budget || 0));
+        break;
+      case 'budget-low':
+        projects.sort((a, b) => (a.budget || 0) - (b.budget || 0));
+        break;
+      case 'progress-high':
+        projects.sort((a, b) => b.progress - a.progress);
+        break;
+      case 'progress-low':
+        projects.sort((a, b) => a.progress - b.progress);
+        break;
+      case 'date-new':
+        projects.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        break;
+      case 'date-old':
+        projects.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        break;
+    }
+
+    // Update table
+    document.getElementById('projects-table-body').innerHTML = renderProjectRows(projects);
+  };
+
+  window.clearProjectFilters = function() {
+    document.getElementById('project-search').value = '';
+    document.getElementById('project-client-filter').value = '';
+    document.getElementById('project-category-filter').value = '';
+    document.getElementById('project-status-filter').value = '';
+    document.getElementById('project-sort').value = 'name';
+    filterProjects();
+  };
+
+  window.viewProjectDetails = function(projectId) {
+    const project = DataManager.projects.getById(projectId);
+    if (!project) {
+      alert('Project not found');
+      return;
+    }
+
+    const client = project.clientId ? DataManager.clients.getById(project.clientId) : null;
+    const milestones = project.milestones || [];
+    const files = project.files || [];
+    const team = project.team || [];
+    const deliverables = project.deliverables || [];
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-briefcase"></i> ${project.title}</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+        <!-- Tab Navigation -->
+        <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--dashboard-border); margin-bottom: 1.5rem; flex-wrap: wrap;">
+          <button class="project-tab active" onclick="switchProjectTab(event, 'overview')">
+            <i class="fas fa-info-circle"></i> Overview
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'milestones')">
+            <i class="fas fa-tasks"></i> Milestones
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'files')">
+            <i class="fas fa-folder-open"></i> Files
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'team')">
+            <i class="fas fa-users"></i> Team
+          </button>
+          <button class="project-tab" onclick="switchProjectTab(event, 'deliverables')">
+            <i class="fas fa-box"></i> Deliverables
+          </button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="project-tab-overview" class="project-tab-content active">
+          <div style="display: grid; gap: 1.5rem;">
+            <!-- Project Info Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-user"></i> Client
+                </div>
+                <strong>${client ? `${client.firstName} ${client.lastName}` : '<span style="color: #f59e0b;">Unassigned</span>'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-folder"></i> Category
+                </div>
+                <strong>${project.category || 'N/A'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-flag"></i> Status
+                </div>
+                <span class="status-badge ${project.status}">${project.status.replace('_', ' ')}</span>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-euro-sign"></i> Budget
+                </div>
+                <strong>€${(project.budget || 0).toLocaleString()}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-calendar"></i> Start Date
+                </div>
+                <strong>${project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}</strong>
+              </div>
+
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <i class="fas fa-calendar-check"></i> Deadline
+                </div>
+                <strong>${project.deadline ? new Date(project.deadline).toLocaleDateString() : 'Not set'}</strong>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span><i class="fas fa-chart-line"></i> Progress</span>
+                <strong>${project.progress}%</strong>
+              </div>
+              <div style="height: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                <div style="width: ${project.progress}%; height: 100%; background: linear-gradient(90deg, #c50077, #ff0095);"></div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="color: var(--dashboard-text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-align-left"></i> Description
+              </div>
+              <p style="margin: 0; white-space: pre-wrap;">${project.description || 'No description provided'}</p>
+            </div>
+
+            <!-- Notes -->
+            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="color: var(--dashboard-text-muted); font-size: 0.85rem;">
+                  <i class="fas fa-sticky-note"></i> Internal Notes
+                </span>
+                <button class="btn-icon" onclick="editProjectNotes('${project.id}')" title="Edit Notes">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+              <p style="margin: 0; white-space: pre-wrap;">${project.notes || 'No notes yet'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestones Tab -->
+        <div id="project-tab-milestones" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addMilestone('${project.id}')">
+              <i class="fas fa-plus"></i> Add Milestone
+            </button>
+          </div>
+
+          <div id="milestones-list">
+            ${milestones.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-tasks" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No milestones yet. Add your first milestone to track progress.</p>
+              </div>
+            ` : milestones.map((m, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${m.completed ? '#10b981' : '#c50077'}; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                      <input type="checkbox" ${m.completed ? 'checked' : ''} onchange="toggleMilestone('${project.id}', ${index})" style="cursor: pointer;">
+                      <strong style="${m.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${m.title}</strong>
+                      ${m.dueDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(m.dueDate).toLocaleDateString()}</span>` : ''}
+                    </div>
+                    ${m.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${m.description}</p>` : ''}
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="editMilestone('${project.id}', ${index})" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteMilestone('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="project-tab-files" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="uploadProjectFile('${project.id}')">
+              <i class="fas fa-upload"></i> Upload File
+            </button>
+          </div>
+
+          <div id="files-list">
+            ${files.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No files uploaded yet. Upload project files, designs, or documents.</p>
+              </div>
+            ` : files.map((file, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-file" style="font-size: 1.5rem; color: var(--dashboard-primary);"></i>
+                    <div>
+                      <strong>${file.name}</strong>
+                      <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                        ${file.size ? `${(file.size / 1024).toFixed(1)} KB` : ''} • ${file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="downloadProjectFile('${project.id}', ${index})" title="Download">
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteProjectFile('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Team Tab -->
+        <div id="project-tab-team" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addTeamMember('${project.id}')">
+              <i class="fas fa-user-plus"></i> Add Team Member
+            </button>
+          </div>
+
+          <div id="team-list">
+            ${team.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No team members assigned. Add team members working on this project.</p>
+              </div>
+            ` : team.map((member, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${member.name}</strong>
+                    <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                      ${member.role || 'Team Member'} ${member.email ? `• ${member.email}` : ''}
+                    </div>
+                  </div>
+                  <button class="btn-icon danger" onclick="removeTeamMember('${project.id}', ${index})" title="Remove">
+                    <i class="fas fa-user-minus"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Deliverables Tab -->
+        <div id="project-tab-deliverables" class="project-tab-content" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn-admin" onclick="addDeliverable('${project.id}')">
+              <i class="fas fa-plus"></i> Add Deliverable
+            </button>
+          </div>
+
+          <div id="deliverables-list">
+            ${deliverables.length === 0 ? `
+              <div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+                <i class="fas fa-box" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No deliverables defined. Add expected project deliverables.</p>
+              </div>
+            ` : deliverables.map((d, index) => `
+              <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${d.delivered ? '#10b981' : '#f59e0b'}; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                      <input type="checkbox" ${d.delivered ? 'checked' : ''} onchange="toggleDeliverable('${project.id}', ${index})" style="cursor: pointer;">
+                      <strong style="${d.delivered ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${d.name}</strong>
+                      ${d.deliveryDate ? `<span style="font-size: 0.85rem; color: var(--dashboard-text-muted);"><i class="fas fa-calendar"></i> ${new Date(d.deliveryDate).toLocaleDateString()}</span>` : ''}
+                    </div>
+                    ${d.description ? `<p style="margin: 0.5rem 0 0 1.5rem; color: var(--dashboard-text-muted); font-size: 0.9rem;">${d.description}</p>` : ''}
+                  </div>
+                  <div class="table-actions">
+                    <button class="btn-icon" onclick="editDeliverable('${project.id}', ${index})" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteDeliverable('${project.id}', ${index})" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Close</button>
+        <button class="btn-admin" onclick="editProject('${project.id}'); closeModal();">
+          <i class="fas fa-edit"></i> Edit Project
+        </button>
+      </div>
+    `);
+
+    // Add tab switching styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .project-tab {
+        padding: 0.75rem 1.5rem;
+        background: rgba(255,255,255,0.05);
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--dashboard-text);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+      }
+      .project-tab:hover {
+        background: rgba(255,255,255,0.1);
+      }
+      .project-tab.active {
+        border-bottom-color: var(--dashboard-primary);
+        background: rgba(197, 0, 119, 0.1);
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  window.switchProjectTab = function(event, tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.project-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.closest('.project-tab').classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.project-tab-content').forEach(content => {
+      content.style.display = 'none';
+      content.classList.remove('active');
+    });
+    const targetContent = document.getElementById(`project-tab-${tabName}`);
+    if (targetContent) {
+      targetContent.style.display = 'block';
+      targetContent.classList.add('active');
+    }
+  };
 
   window.showCreateProjectModal = function(prefill = {}) {
     const clients = DataManager.clients.getAll();
