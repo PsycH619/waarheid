@@ -59,7 +59,7 @@
   margin-top: 3rem;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding-bottom: 1rem;
+  padding: 0 calc((100vw - 380px) / 2) 1rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   cursor: grab;
@@ -85,13 +85,15 @@
   cursor: pointer;
   height: auto;
   min-height: 500px;
-  min-width: 380px;
+  width: 380px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   scroll-snap-align: center;
+  scroll-snap-stop: always;
   opacity: 0.6;
   transform: scale(0.95);
+  will-change: transform, opacity;
 }
 
 .category-card.active {
@@ -436,7 +438,7 @@
   margin-top: 3rem;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding-bottom: 1rem;
+  padding: 0 calc((100vw - 380px) / 2) 1rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   cursor: grab;
@@ -459,11 +461,13 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.4s ease;
   cursor: pointer;
-  min-width: 380px;
+  width: 380px;
   flex-shrink: 0;
   scroll-snap-align: center;
+  scroll-snap-stop: always;
   opacity: 0.6;
   transform: scale(0.95);
+  will-change: transform, opacity;
 }
 
 .portfolio-card.active {
