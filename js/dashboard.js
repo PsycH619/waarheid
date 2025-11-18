@@ -755,6 +755,12 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'reports':
         loadReportsSection();
         break;
+      case 'profile':
+        loadProfileSection();
+        break;
+      case 'settings':
+        loadSettingsSection();
+        break;
     }
   }
 
@@ -2613,6 +2619,349 @@ document.addEventListener('DOMContentLoaded', function() {
       alert(`Generating report for: ${project.title}... This would create a project-specific report. Demo mode only.`);
     }
   };
+
+  // ============================================
+  // Profile Section
+  // ============================================
+  function loadProfileSection() {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userEmail = localStorage.getItem('userEmail') || '';
+
+    mainContent.innerHTML = `
+      <div class="dashboard-section-header">
+        <h2><i class="fas fa-user-circle"></i> My Profile</h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; max-width: 1200px;">
+        <!-- Profile Sidebar -->
+        <div>
+          <div class="dashboard-card" style="text-align: center;">
+            <div style="width: 150px; height: 150px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #c50077, #ff0095); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-user" style="font-size: 4rem; color: white;"></i>
+            </div>
+            <h2 style="margin: 0 0 0.5rem 0;">${userData.firstName || 'Client'} ${userData.lastName || ''}</h2>
+            <p style="color: var(--dashboard-text-muted); margin: 0 0 1rem 0;">${userEmail}</p>
+            <span class="status-badge active">Client</span>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+              <button class="btn-primary" onclick="editProfilePhoto()" style="width: 100%; margin-bottom: 0.5rem;">
+                <i class="fas fa-camera"></i> Change Photo
+              </button>
+              <button class="btn-secondary" onclick="navigateToSection('settings')" style="width: 100%;">
+                <i class="fas fa-cog"></i> Settings
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card" style="margin-top: 1rem;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1rem;"><i class="fas fa-chart-line"></i> My Projects</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Active:</span>
+                <strong>${DataManager.projects.getAll().filter(p => p.status === 'in_progress').length}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Completed:</span>
+                <strong>${DataManager.projects.getAll().filter(p => p.status === 'completed').length}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Total:</span>
+                <strong>${DataManager.projects.getAll().length}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div>
+          <div class="dashboard-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+              <h2 style="margin: 0;"><i class="fas fa-info-circle"></i> Personal Information</h2>
+              <button class="btn-primary" onclick="editProfileInfo()">
+                <i class="fas fa-edit"></i> Edit Profile
+              </button>
+            </div>
+
+            <form id="client-profile-form">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <label>First Name</label>
+                  <input type="text" id="profile-firstname" value="${userData.firstName || ''}" readonly>
+                </div>
+                <div class="form-group">
+                  <label>Last Name</label>
+                  <input type="text" id="profile-lastname" value="${userData.lastName || ''}" readonly>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="profile-email" value="${userEmail}" readonly>
+                </div>
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="tel" id="profile-phone" value="${userData.phone || ''}" readonly>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Company</label>
+                <input type="text" id="profile-company" value="${userData.company || ''}" readonly>
+              </div>
+            </form>
+          </div>
+
+          <div class="dashboard-card" style="margin-top: 1.5rem;">
+            <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-clock"></i> Account Information</h2>
+            <div style="display: grid; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <span><i class="fas fa-calendar-plus" style="margin-right: 0.5rem; color: #c50077;"></i> Member Since:</span>
+                <strong>${userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <span><i class="fas fa-sign-in-alt" style="margin-right: 0.5rem; color: #c50077;"></i> Last Login:</span>
+                <strong>Today</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.editProfileInfo = function() {
+    const inputs = ['profile-firstname', 'profile-lastname', 'profile-phone', 'profile-company'];
+    const isEditing = document.getElementById('profile-firstname').hasAttribute('readonly');
+
+    if (isEditing) {
+      // Enable editing
+      inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.removeAttribute('readonly');
+      });
+
+      // Show save/cancel buttons
+      const form = document.getElementById('client-profile-form');
+      if (form && !document.getElementById('profile-actions')) {
+        form.insertAdjacentHTML('afterend', `
+          <div id="profile-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button class="btn-primary" onclick="saveProfileInfo()" style="flex: 1;">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+            <button class="btn-secondary" onclick="loadProfileSection()" style="flex: 1;">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        `);
+      }
+
+      // Update edit button
+      event.target.innerHTML = '<i class="fas fa-times"></i> Cancel Edit';
+      event.target.onclick = () => loadProfileSection();
+    }
+  };
+
+  window.saveProfileInfo = function() {
+    const userData = {
+      firstName: document.getElementById('profile-firstname').value,
+      lastName: document.getElementById('profile-lastname').value,
+      phone: document.getElementById('profile-phone').value,
+      company: document.getElementById('profile-company').value,
+      email: localStorage.getItem('userEmail'),
+      createdAt: JSON.parse(localStorage.getItem('userData') || '{}').createdAt || new Date().toISOString()
+    };
+
+    localStorage.setItem('userData', JSON.stringify(userData));
+    alert('Profile updated successfully!');
+    loadProfileSection();
+  };
+
+  window.editProfilePhoto = function() {
+    alert('Profile picture upload functionality would be implemented here with a file upload dialog.');
+  };
+
+  // ============================================
+  // Settings Section
+  // ============================================
+  function loadSettingsSection() {
+    mainContent.innerHTML = `
+      <div class="dashboard-section-header">
+        <h2><i class="fas fa-cog"></i> Settings</h2>
+      </div>
+
+      <div style="max-width: 900px;">
+        <!-- Account Security -->
+        <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-user-shield"></i> Account Security</h2>
+
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; margin: 0 0 1rem 0;">Change Password</h3>
+            <form id="change-password-form" onsubmit="changeClientPassword(event)">
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Current Password</label>
+                <input type="password" id="current-password" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label>New Password</label>
+                <input type="password" id="new-password" required minlength="8">
+              </div>
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirm-password" required>
+              </div>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-key"></i> Update Password
+              </button>
+            </form>
+          </div>
+
+          <div style="padding: 1.5rem; background: rgba(197, 0, 119, 0.1); border: 1px solid rgba(197, 0, 119, 0.3); border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">
+                  <i class="fas fa-shield-alt" style="color: #c50077;"></i> Two-Factor Authentication
+                </h3>
+                <p style="margin: 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">
+                  Add an extra layer of security to your account
+                </p>
+              </div>
+              <button class="btn-secondary" onclick="enableClient2FA()">
+                <i class="fas fa-plus"></i> Enable
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification Preferences -->
+        <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-bell"></i> Notification Preferences</h2>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Email Notifications</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Receive email updates about your projects</div>
+              </div>
+              <input type="checkbox" id="client-email-notifications" checked onchange="saveClientNotifications()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Project Updates</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Get notified about project milestones and changes</div>
+              </div>
+              <input type="checkbox" id="client-project-updates" checked onchange="saveClientNotifications()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Invoice Reminders</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Receive reminders for pending invoices</div>
+              </div>
+              <input type="checkbox" id="client-invoice-reminders" checked onchange="saveClientNotifications()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Marketing Communications</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Receive newsletters and promotional updates</div>
+              </div>
+              <input type="checkbox" id="client-marketing" onchange="saveClientNotifications()" style="width: 20px; height: 20px;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="dashboard-card">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-palette"></i> Appearance</h2>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label>Theme</label>
+            <select id="client-theme-select" onchange="changeClientTheme(this.value)">
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+              <option value="auto">Auto (System Preference)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Language</label>
+            <select id="client-language-select" onchange="changeClientLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="nl">Nederlands</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.changeClientPassword = function(event) {
+    event.preventDefault();
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match!');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters long!');
+      return;
+    }
+
+    // In a real app, verify current password against stored hash
+    alert('Password changed successfully!');
+    document.getElementById('change-password-form').reset();
+  };
+
+  window.enableClient2FA = function() {
+    alert('Two-factor authentication setup would be implemented here. You would scan a QR code with an authenticator app.');
+  };
+
+  window.saveClientNotifications = function() {
+    const settings = {
+      emailNotifications: document.getElementById('client-email-notifications').checked,
+      projectUpdates: document.getElementById('client-project-updates').checked,
+      invoiceReminders: document.getElementById('client-invoice-reminders').checked,
+      marketing: document.getElementById('client-marketing').checked
+    };
+
+    localStorage.setItem('clientNotificationSettings', JSON.stringify(settings));
+  };
+
+  window.changeClientTheme = function(theme) {
+    localStorage.setItem('theme', theme);
+    alert(`Theme changed to: ${theme}`);
+  };
+
+  window.changeClientLanguage = function(language) {
+    localStorage.setItem('language', language);
+    alert(`Language changed to: ${language}`);
+  };
+
+  // ============================================
+  // User Menu - Dropdown Event Listeners
+  // ============================================
+  const userDropdownLinks = document.querySelectorAll('.user-dropdown a[data-section]');
+  userDropdownLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const section = this.getAttribute('data-section');
+      if (section) {
+        // Close the user menu
+        document.querySelector('.user-menu').classList.remove('active');
+        // Navigate to the section
+        navigateToSection(section);
+      }
+    });
+  });
 
   console.log('Waarheid Marketing - Client Dashboard Loaded');
 });

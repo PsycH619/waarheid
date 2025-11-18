@@ -743,6 +743,197 @@ window.DataManager = (function() {
     }
   };
 
+  // ============================================
+  // User Management (Admin & Client Accounts)
+  // ============================================
+  const UserManager = {
+    getAll: function() {
+      return JSON.parse(localStorage.getItem('waarheid_users') || '[]');
+    },
+
+    getById: function(userId) {
+      const users = this.getAll();
+      return users.find(u => u.id === userId);
+    },
+
+    getByEmail: function(email) {
+      const users = this.getAll();
+      return users.find(u => u.email === email);
+    },
+
+    getByRole: function(role) {
+      const users = this.getAll();
+      return users.filter(u => u.role === role);
+    },
+
+    create: function(userData) {
+      const users = this.getAll();
+
+      // Check if email already exists
+      if (users.find(u => u.email === userData.email)) {
+        throw new Error('Email already exists');
+      }
+
+      const newUser = {
+        id: DataManager.generateId('user'),
+        email: userData.email,
+        password: userData.password, // In production, this should be hashed
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        role: userData.role || 'client', // admin, client, manager, staff
+        permissions: userData.permissions || this.getDefaultPermissions(userData.role),
+        avatar: userData.avatar || '',
+        phone: userData.phone || '',
+        company: userData.company || '',
+        address: userData.address || '',
+        bio: userData.bio || '',
+        status: userData.status || 'active', // active, inactive, suspended
+        emailVerified: userData.emailVerified || false,
+        twoFactorEnabled: userData.twoFactorEnabled || false,
+        lastLogin: null,
+        preferences: {
+          emailNotifications: true,
+          smsNotifications: false,
+          theme: 'dark',
+          language: 'en'
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      users.push(newUser);
+      localStorage.setItem('waarheid_users', JSON.stringify(users));
+      return newUser;
+    },
+
+    update: function(userId, updates) {
+      const users = this.getAll();
+      const index = users.findIndex(u => u.id === userId);
+      if (index !== -1) {
+        // Don't allow email change if it creates duplicate
+        if (updates.email && updates.email !== users[index].email) {
+          const emailExists = users.find(u => u.email === updates.email && u.id !== userId);
+          if (emailExists) {
+            throw new Error('Email already exists');
+          }
+        }
+
+        users[index] = {
+          ...users[index],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem('waarheid_users', JSON.stringify(users));
+        return users[index];
+      }
+      return null;
+    },
+
+    updatePassword: function(userId, currentPassword, newPassword) {
+      const users = this.getAll();
+      const user = users.find(u => u.id === userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.password !== currentPassword) {
+        throw new Error('Current password is incorrect');
+      }
+
+      return this.update(userId, { password: newPassword });
+    },
+
+    updatePermissions: function(userId, permissions) {
+      return this.update(userId, { permissions: permissions });
+    },
+
+    updateLastLogin: function(userId) {
+      return this.update(userId, { lastLogin: new Date().toISOString() });
+    },
+
+    delete: function(userId) {
+      const users = this.getAll();
+      const filtered = users.filter(u => u.id !== userId);
+      localStorage.setItem('waarheid_users', JSON.stringify(filtered));
+      return true;
+    },
+
+    suspend: function(userId) {
+      return this.update(userId, { status: 'suspended' });
+    },
+
+    activate: function(userId) {
+      return this.update(userId, { status: 'active' });
+    },
+
+    getDefaultPermissions: function(role) {
+      const permissionSets = {
+        admin: {
+          dashboard: { view: true, edit: true, delete: true },
+          users: { view: true, edit: true, delete: true, manage_roles: true },
+          clients: { view: true, edit: true, delete: true },
+          projects: { view: true, edit: true, delete: true, assign: true },
+          consultations: { view: true, edit: true, delete: true, approve: true },
+          messages: { view: true, edit: true, delete: true },
+          invoices: { view: true, edit: true, delete: true, approve: true },
+          analytics: { view: true, export: true },
+          settings: { view: true, edit: true }
+        },
+        manager: {
+          dashboard: { view: true, edit: true, delete: false },
+          users: { view: true, edit: false, delete: false, manage_roles: false },
+          clients: { view: true, edit: true, delete: false },
+          projects: { view: true, edit: true, delete: false, assign: true },
+          consultations: { view: true, edit: true, delete: false, approve: true },
+          messages: { view: true, edit: true, delete: false },
+          invoices: { view: true, edit: true, delete: false, approve: false },
+          analytics: { view: true, export: true },
+          settings: { view: true, edit: false }
+        },
+        staff: {
+          dashboard: { view: true, edit: false, delete: false },
+          users: { view: false, edit: false, delete: false, manage_roles: false },
+          clients: { view: true, edit: false, delete: false },
+          projects: { view: true, edit: true, delete: false, assign: false },
+          consultations: { view: true, edit: false, delete: false, approve: false },
+          messages: { view: true, edit: true, delete: false },
+          invoices: { view: true, edit: false, delete: false, approve: false },
+          analytics: { view: true, export: false },
+          settings: { view: true, edit: false }
+        },
+        client: {
+          dashboard: { view: true, edit: false, delete: false },
+          users: { view: false, edit: false, delete: false, manage_roles: false },
+          clients: { view: false, edit: false, delete: false },
+          projects: { view: true, edit: false, delete: false, assign: false },
+          consultations: { view: true, edit: false, delete: false, approve: false },
+          messages: { view: true, edit: true, delete: false },
+          invoices: { view: true, edit: false, delete: false, approve: false },
+          analytics: { view: true, export: false },
+          settings: { view: true, edit: true }
+        }
+      };
+
+      return permissionSets[role] || permissionSets.client;
+    },
+
+    hasPermission: function(userId, resource, action) {
+      const user = this.getById(userId);
+      if (!user) return false;
+
+      // Admins always have permission
+      if (user.role === 'admin') return true;
+
+      // Check specific permission
+      if (user.permissions && user.permissions[resource]) {
+        return user.permissions[resource][action] === true;
+      }
+
+      return false;
+    }
+  };
+
   // Initialize data on load
   initializeData();
 
@@ -757,6 +948,7 @@ window.DataManager = (function() {
     tickets: TicketManager,
     timeslots: TimeSlotManager,
     notifications: NotificationManager,
+    users: UserManager,
 
     // Utility functions
     generateId: function(prefix) {
