@@ -1420,22 +1420,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sort by date
     consultations.sort((a, b) => new Date(a.preferredDate) - new Date(b.preferredDate));
 
-    scheduleList.innerHTML = consultations.map(consultation => {
+    const consultationCards = consultations.map(consultation => {
       const statusClasses = {
         'pending': 'status-pending',
         'approved': 'status-approved',
         'rejected': 'status-rejected',
-        'completed': 'status-completed'
+        'completed': 'status-completed',
+        'cancelled': 'status-cancelled'
       };
 
       const statusLabels = {
         'pending': 'Pending Review',
         'approved': 'Approved',
         'rejected': 'Declined',
-        'completed': 'Completed'
+        'completed': 'Completed',
+        'cancelled': 'Cancelled'
       };
 
       const date = new Date(consultation.preferredDate);
+      const canModify = consultation.status === 'pending' || consultation.status === 'approved';
 
       return `
         <div class="schedule-card">
@@ -1476,9 +1479,28 @@ document.addEventListener('DOMContentLoaded', function() {
               <strong>Message:</strong> ${consultation.message}
             </div>
           ` : ''}
+          ${canModify ? `
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--dashboard-border);">
+              <button class="btn-secondary" onclick="rescheduleConsultation('${consultation.id}')" style="flex: 1;">
+                <i class="fas fa-calendar-alt"></i> Reschedule
+              </button>
+              <button class="btn-secondary" onclick="cancelConsultation('${consultation.id}')" style="flex: 1; background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;">
+                <i class="fas fa-times-circle"></i> Cancel
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
+
+    // Always show Book Consultation button at the bottom
+    scheduleList.innerHTML = consultationCards + `
+      <div style="text-align: center; margin-top: 2rem;">
+        <button class="btn-primary" onclick="openConsultationModal()">
+          <i class="fas fa-calendar-plus"></i> Book Another Consultation
+        </button>
+      </div>
+    `;
   }
 
   // ============================================
@@ -1613,6 +1635,187 @@ document.addEventListener('DOMContentLoaded', function() {
 
     closeConsultationModal();
     alert('Consultation booked successfully! We will contact you to confirm the appointment.');
+    loadScheduleSection();
+  };
+
+  // Cancel Consultation
+  window.cancelConsultation = function(consultationId) {
+    const modal = document.createElement('div');
+    modal.id = 'cancel-consultation-modal';
+    modal.className = 'ticket-modal-overlay active';
+    modal.innerHTML = `
+      <div class="ticket-modal-container" style="max-width: 500px;">
+        <div class="ticket-modal-header">
+          <h2>Cancel Consultation</h2>
+          <button class="modal-close-btn" onclick="closeCancelModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="ticket-modal-body">
+          <form id="cancel-form" onsubmit="submitCancellation(event, '${consultationId}')">
+            <div class="form-group">
+              <label for="cancel-reason">
+                <i class="fas fa-comment"></i> Reason for Cancellation *
+              </label>
+              <textarea
+                id="cancel-reason"
+                rows="4"
+                placeholder="Please let us know why you need to cancel..."
+                required
+              ></textarea>
+            </div>
+            <div class="ticket-modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeCancelModal()">
+                Keep Consultation
+              </button>
+              <button type="submit" class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;">
+                <i class="fas fa-times-circle"></i> Confirm Cancellation
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeCancelModal = function() {
+    const modal = document.getElementById('cancel-consultation-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.submitCancellation = function(event, consultationId) {
+    event.preventDefault();
+    const reason = document.getElementById('cancel-reason').value;
+
+    // Update consultation status to cancelled
+    DataManager.consultations.update(consultationId, {
+      status: 'cancelled',
+      cancellationReason: reason,
+      cancelledAt: new Date().toISOString()
+    });
+
+    // Release the time slot if it was booked
+    const consultation = DataManager.consultations.getById(consultationId);
+    if (consultation && consultation.timeSlotId) {
+      DataManager.timeslots.release(consultation.timeSlotId);
+    }
+
+    closeCancelModal();
+    alert('Consultation cancelled successfully.');
+    loadScheduleSection();
+  };
+
+  // Reschedule Consultation
+  window.rescheduleConsultation = function(consultationId) {
+    const availableSlots = DataManager.timeslots.getAvailable();
+    const consultation = DataManager.consultations.getById(consultationId);
+
+    const modal = document.createElement('div');
+    modal.id = 'reschedule-consultation-modal';
+    modal.className = 'ticket-modal-overlay active';
+    modal.innerHTML = `
+      <div class="ticket-modal-container" style="max-width: 600px;">
+        <div class="ticket-modal-header">
+          <h2>Reschedule Consultation</h2>
+          <button class="modal-close-btn" onclick="closeRescheduleModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="ticket-modal-body">
+          <form id="reschedule-form" onsubmit="submitReschedule(event, '${consultationId}')">
+            <div class="form-group">
+              <label for="reschedule-reason">
+                <i class="fas fa-comment"></i> Reason for Rescheduling *
+              </label>
+              <textarea
+                id="reschedule-reason"
+                rows="3"
+                placeholder="Please let us know why you need to reschedule..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="new-slot">
+                <i class="fas fa-clock"></i> Select New Time Slot *
+              </label>
+              <select id="new-slot" required>
+                <option value="">Choose available slot...</option>
+                ${availableSlots.map(slot => `
+                  <option value="${slot.id}">
+                    ${new Date(slot.date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}
+                    - ${slot.startTime} to ${slot.endTime}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div class="ticket-modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeRescheduleModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-calendar-check"></i> Confirm Reschedule
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeRescheduleModal = function() {
+    const modal = document.getElementById('reschedule-consultation-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.submitReschedule = function(event, consultationId) {
+    event.preventDefault();
+    const reason = document.getElementById('reschedule-reason').value;
+    const newSlotId = document.getElementById('new-slot').value;
+
+    if (!newSlotId) {
+      alert('Please select a new time slot');
+      return;
+    }
+
+    const consultation = DataManager.consultations.getById(consultationId);
+    const newSlot = DataManager.timeslots.getAll().find(s => s.id === newSlotId);
+
+    if (!newSlot) {
+      alert('Selected time slot not found');
+      return;
+    }
+
+    // Release old time slot if it exists
+    if (consultation.timeSlotId) {
+      DataManager.timeslots.release(consultation.timeSlotId);
+    }
+
+    // Book new time slot
+    DataManager.timeslots.book(newSlotId, consultationId, consultation.clientId);
+
+    // Update consultation
+    DataManager.consultations.update(consultationId, {
+      preferredDate: newSlot.date,
+      preferredTime: newSlot.startTime,
+      timeSlotId: newSlotId,
+      rescheduleReason: reason,
+      rescheduledAt: new Date().toISOString()
+    });
+
+    closeRescheduleModal();
+    alert('Consultation rescheduled successfully!');
     loadScheduleSection();
   };
 
