@@ -319,6 +319,125 @@ document.addEventListener('DOMContentLoaded', function() {
   // (Optional - would require including the library)
   // ============================================
 
+  // ============================================
+  // Particles Animation for Hero Section
+  // ============================================
+  const canvas = document.getElementById('particles-canvas');
+
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const hero = document.querySelector('.hero');
+    let particles = [];
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    // Set canvas size
+    function resizeCanvas() {
+      canvas.width = hero.offsetWidth;
+      canvas.height = hero.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Particle class
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = Math.random() * 0.5 - 0.25;
+        this.speedY = Math.random() * 0.5 - 0.25;
+        this.opacity = Math.random() * 0.5 + 0.3;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // Wrap around screen
+        if (this.x > canvas.width) this.x = 0;
+        if (this.x < 0) this.x = canvas.width;
+        if (this.y > canvas.height) this.y = 0;
+        if (this.y < 0) this.y = canvas.height;
+      }
+
+      draw() {
+        ctx.fillStyle = `rgba(197, 0, 119, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Create particles
+    function createParticles() {
+      const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+    createParticles();
+
+    // Mouse move parallax effect
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+
+    // Animate particles and parallax
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Smooth parallax
+      targetX += (mouseX - targetX) * 0.05;
+      targetY += (mouseY - targetY) * 0.05;
+
+      // Apply parallax to background
+      const heroImageBg = document.querySelector('.hero-image-bg');
+      if (heroImageBg) {
+        const moveX = (targetX - canvas.width / 2) * 0.02;
+        const moveY = (targetY - canvas.height / 2) * 0.02;
+        heroImageBg.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
+      }
+
+      // Update and draw particles
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      // Draw connections between nearby particles
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 100) {
+            ctx.strokeStyle = `rgba(197, 0, 119, ${0.2 * (1 - distance / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Recreate particles on resize
+    window.addEventListener('resize', () => {
+      particles = [];
+      createParticles();
+    });
+  }
+
   console.log('Waarheid Marketing - Website Loaded Successfully');
 });
 
