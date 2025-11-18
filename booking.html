@@ -389,6 +389,8 @@
     </div>
   </footer>
 
+  <script src="js/data-manager.js"></script>
+  <script src="js/auth-state.js"></script>
   <script src="js/main.js"></script>
   <script src="js/enhanced.js"></script>
   <script>
@@ -399,6 +401,42 @@
         this.classList.add('selected');
         document.getElementById('selected-time').value = this.getAttribute('data-time');
       });
+    });
+
+    // Consultation booking form submission
+    document.querySelector('.contact-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData);
+
+      // Create consultation request
+      const consultation = DataManager.consultations.create({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company || null,
+        service: data.service,
+        budget: data.budget || null,
+        preferredDate: data.preferred_day,
+        preferredTime: data.preferred_time,
+        message: data.message || null
+      });
+
+      // Show success message
+      alert('Thank you for your consultation request! We will contact you soon to confirm your appointment.');
+
+      // Reset form
+      this.reset();
+      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+
+      // If user is logged in, redirect to dashboard
+      if (localStorage.getItem('authToken')) {
+        setTimeout(() => {
+          const isAdmin = localStorage.getItem('userRole') === 'admin';
+          window.location.href = isAdmin ? 'admin-dashboard.html' : 'dashboard.html';
+        }, 1500);
+      }
     });
   </script>
 </body>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Waarheid Marketing</title>
+  <meta name="description" content="Waarheid Marketing Admin Management Portal">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Dashboard Header -->
+  <header class="dashboard-header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="images/Waarheid-Marketing-neon-logo.png" alt="Waarheid Marketing" class="logo-image">
+        <span class="logo-text">Waarheid Marketing</span>
+        <span class="admin-badge">ADMIN</span>
+      </a>
+
+      <div class="header-actions">
+        <button class="notifications-btn" aria-label="Notifications" id="admin-notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge" id="notification-count">0</span>
+        </button>
+
+        <div class="user-menu">
+          <button class="user-menu-toggle" aria-label="User menu">
+            <div class="user-avatar">
+              <i class="fas fa-crown"></i>
+            </div>
+            <span class="user-name">Admin</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+
+          <div class="user-dropdown">
+            <a href="index.html"><i class="fas fa-home"></i> View Website</a>
+            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Container -->
+  <div class="dashboard-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-section="overview">
+          <i class="fas fa-th-large"></i>
+          <span>Overview</span>
+        </a>
+        <a href="#" class="nav-link" data-section="consultations">
+          <i class="fas fa-calendar-check"></i>
+          <span>Consultations</span>
+          <span class="nav-badge" id="consultations-badge">0</span>
+        </a>
+        <a href="#" class="nav-link" data-section="projects">
+          <i class="fas fa-briefcase"></i>
+          <span>Projects</span>
+        </a>
+        <a href="#" class="nav-link" data-section="clients">
+          <i class="fas fa-users"></i>
+          <span>Clients</span>
+        </a>
+        <a href="#" class="nav-link" data-section="messages">
+          <i class="fas fa-comments"></i>
+          <span>Messages</span>
+          <span class="nav-badge" id="messages-badge">0</span>
+        </a>
+        <a href="#" class="nav-link" data-section="invoices">
+          <i class="fas fa-file-invoice-dollar"></i>
+          <span>Invoices</span>
+        </a>
+        <a href="#" class="nav-link" data-section="analytics">
+          <i class="fas fa-chart-line"></i>
+          <span>Analytics</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main" id="admin-main-content">
+      <!-- Content will be dynamically loaded -->
+    </main>
+  </div>
+
+  <!-- Modals will be inserted here -->
+  <div id="modal-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/data-manager.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
