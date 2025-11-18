@@ -428,6 +428,13 @@ window.DataManager = (function() {
         status: 'paid',
         paidDate: paymentDate || new Date().toISOString()
       });
+    },
+
+    markAsUnpaid: function(invoiceId) {
+      return this.update(invoiceId, {
+        status: 'pending',
+        paidDate: null
+      });
     }
   };
 

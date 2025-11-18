@@ -73,6 +73,60 @@ h3 {
 }
 
 /* ============================================
+   Form Inputs - Dropdowns and Number Inputs
+   ============================================ */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--dashboard-card) !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1.2em;
+  padding-right: 2.5rem !important;
+  border: 1px solid var(--dashboard-border) !important;
+  border-radius: 8px !important;
+  color: var(--dashboard-text) !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease;
+}
+
+select:hover {
+  border-color: var(--dashboard-primary) !important;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--dashboard-primary) !important;
+  box-shadow: 0 0 0 3px rgba(197, 0, 119, 0.1);
+}
+
+/* Number input spinner styles */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  opacity: 1;
+  width: 20px;
+  height: 100%;
+  cursor: pointer;
+  background: var(--dashboard-primary);
+  border-left: 1px solid var(--dashboard-border);
+}
+
+input[type="number"]::-webkit-inner-spin-button:hover,
+input[type="number"]::-webkit-outer-spin-button:hover {
+  background: #ff0095;
+}
+
+/* ============================================
    Admin Badge
    ============================================ */
 .admin-badge {
