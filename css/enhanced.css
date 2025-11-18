@@ -54,10 +54,31 @@
    Visual Category Cards (Full Card Layout)
    ============================================ */
 .category-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  display: flex;
   gap: 2rem;
   margin-top: 3rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-cards::-webkit-scrollbar {
+  height: 8px;
+}
+
+.category-cards::-webkit-scrollbar-track {
+  background: var(--color-light);
+  border-radius: 10px;
+}
+
+.category-cards::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 10px;
+}
+
+.category-cards::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 .category-card {
@@ -70,6 +91,8 @@
   cursor: pointer;
   height: auto;
   min-height: 500px;
+  min-width: 380px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
@@ -405,10 +428,31 @@
    Portfolio / Case Studies Cards
    ============================================ */
 .portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  display: flex;
   gap: 2.5rem;
   margin-top: 3rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.portfolio-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.portfolio-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.portfolio-grid::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 10px;
+}
+
+.portfolio-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 .portfolio-card {
@@ -418,6 +462,8 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.4s ease;
   cursor: pointer;
+  min-width: 380px;
+  flex-shrink: 0;
 }
 
 .portfolio-card:hover {
@@ -505,7 +551,7 @@
    ============================================ */
 .industries-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-top: 2rem;
 }
@@ -761,6 +807,25 @@
   }
 
   .industries-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
+
+  .category-card {
+    min-width: 300px;
+  }
+
+  .portfolio-card {
+    min-width: 300px;
+  }
+}
+
+/* Particles Canvas */
+#particles-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
