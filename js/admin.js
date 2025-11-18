@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const consultations = DataManager.consultations.getAll();
     const projects = DataManager.projects.getAll();
     const clients = DataManager.clients.getAll();
-    const messages = DataManager.messages.getUnread(true);
     const invoices = DataManager.invoices.getAll();
 
     const pendingConsultations = consultations.filter(c => c.status === 'pending').length;
@@ -1015,118 +1014,318 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // ============================================
-  // Messages Section
+  // Messages/Tickets Section
   // ============================================
+  let currentAdminTicketId = null;
+
   function loadMessages() {
-    const clients = DataManager.clients.getAll();
+    const tickets = DataManager.tickets.getAll();
     updateMessagesBadge();
 
-    if (clients.length === 0) {
+    if (tickets.length === 0) {
       mainContent.innerHTML = `
-        <h1>Messages</h1>
+        <h1>Support Tickets</h1>
         <div class="empty-state">
-          <i class="fas fa-comments"></i>
-          <h3>No Clients</h3>
-          <p>Add clients first to start messaging</p>
+          <i class="fas fa-ticket-alt"></i>
+          <h3>No Tickets Yet</h3>
+          <p>Support tickets from clients will appear here</p>
         </div>
       `;
       return;
     }
 
-    // Load messages for first client
-    const selectedClientId = clients[0].id;
-    loadClientMessages(selectedClientId, clients);
-  }
-
-  function loadClientMessages(clientId, allClients = null) {
-    const clients = allClients || DataManager.clients.getAll();
-    const selectedClient = DataManager.clients.getById(clientId);
-    const messages = DataManager.messages.getByClient(clientId);
-
-    // Mark all messages from this client as read
-    DataManager.messages.markAllAsRead(clientId, true);
-    updateMessagesBadge();
+    // Group tickets by status
+    const openTickets = tickets.filter(t => t.status === 'open');
+    const inProgressTickets = tickets.filter(t => t.status === 'in_progress');
+    const resolvedTickets = tickets.filter(t => t.status === 'resolved');
+    const closedTickets = tickets.filter(t => t.status === 'closed');
 
     mainContent.innerHTML = `
-      <h1>Messages</h1>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Support Tickets</h1>
+        <div style="display: flex; gap: 1rem; font-size: 0.9rem;">
+          <span style="color: var(--dashboard-text-muted);">
+            <strong>${openTickets.length}</strong> Open
+          </span>
+          <span style="color: var(--dashboard-text-muted);">
+            <strong>${inProgressTickets.length}</strong> In Progress
+          </span>
+          <span style="color: var(--dashboard-text-muted);">
+            <strong>${resolvedTickets.length}</strong> Resolved
+          </span>
+        </div>
+      </div>
 
-      <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
+      <div style="display: grid; grid-template-columns: 400px 1fr; gap: 2rem;">
+        <!-- Ticket List -->
         <div>
-          <h3 style="margin-bottom: 1rem;">Clients</h3>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            ${clients.map(c => {
-              const clientMessages = DataManager.messages.getByClient(c.id);
-              const unreadCount = clientMessages.filter(m => !m.read && !m.isFromAdmin).length;
-              return `
-                <button
-                  class="btn-admin secondary"
-                  style="justify-content: space-between; ${c.id === clientId ? 'background: rgba(197, 0, 119, 0.2); border-color: var(--dashboard-primary);' : ''}"
-                  onclick="loadClientMessages('${c.id}')">
-                  <span>${c.firstName} ${c.lastName}</span>
-                  ${unreadCount > 0 ? `<span class="status-badge pending">${unreadCount}</span>` : ''}
-                </button>
-              `;
-            }).join('')}
+          <div style="margin-bottom: 1rem;">
+            <select id="ticket-filter" onchange="filterAdminTickets(this.value)" style="width: 100%; padding: 0.6rem; background: var(--dashboard-card); border: 1px solid var(--dashboard-border); border-radius: 8px; color: var(--dashboard-text);">
+              <option value="all">All Tickets</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          <div id="tickets-list-container" style="display: flex; flex-direction: column; gap: 0.8rem; max-height: calc(100vh - 300px); overflow-y: auto;">
+            ${renderAdminTicketsList(tickets)}
           </div>
         </div>
 
-        <div>
-          <div class="message-thread">
-            <div class="message-thread-header">
-              <h3>${selectedClient.firstName} ${selectedClient.lastName}</h3>
-              <p style="margin: 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">${selectedClient.email}</p>
+        <!-- Ticket Conversation -->
+        <div id="ticket-conversation-container">
+          ${tickets.length > 0 ? renderAdminTicketConversation(tickets[0]) : `
+            <div style="text-align: center; padding: 3rem; color: var(--dashboard-text-muted);">
+              <i class="fas fa-ticket-alt" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+              <p>Select a ticket to view conversation</p>
             </div>
-
-            <div class="message-thread-body" id="message-thread-body">
-              ${messages.length === 0 ? `
-                <div style="text-align: center; color: var(--dashboard-text-muted); padding: 2rem;">
-                  <i class="fas fa-comments" style="font-size: 2rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                  <p>No messages yet. Start the conversation!</p>
-                </div>
-              ` : messages.map(m => `
-                <div class="message-bubble ${m.isFromAdmin ? 'from-admin' : 'from-client'}">
-                  <div class="message-bubble-sender">${m.isFromAdmin ? 'You (Admin)' : selectedClient.firstName}</div>
-                  <div class="message-bubble-text">${m.content}</div>
-                  <div class="message-bubble-time">${new Date(m.createdAt).toLocaleString()}</div>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="message-thread-footer">
-              <div class="message-input-group">
-                <input type="text" id="message-input" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendMessage('${clientId}')">
-                <button onclick="sendMessage('${clientId}')">
-                  <i class="fas fa-paper-plane"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+          `}
         </div>
       </div>
     `;
 
-    // Scroll to bottom
-    const threadBody = document.getElementById('message-thread-body');
-    if (threadBody) {
-      threadBody.scrollTop = threadBody.scrollHeight;
+    // Auto-select first ticket
+    if (tickets.length > 0) {
+      currentAdminTicketId = tickets[0].id;
     }
+
+    // Scroll ticket conversation to bottom
+    setTimeout(() => {
+      const threadBody = document.getElementById('admin-ticket-thread');
+      if (threadBody) {
+        threadBody.scrollTop = threadBody.scrollHeight;
+      }
+    }, 100);
   }
 
-  window.sendMessage = function(clientId) {
-    const input = document.getElementById('message-input');
-    const content = input.value.trim();
+  function renderAdminTicketsList(tickets, filterStatus = 'all') {
+    const filtered = filterStatus === 'all' ? tickets : tickets.filter(t => t.status === filterStatus);
 
-    if (!content) return;
+    if (filtered.length === 0) {
+      return `<div style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">No tickets in this category</div>`;
+    }
 
-    DataManager.messages.create({
-      clientId: clientId,
-      projectId: null,
-      content: content,
-      isFromAdmin: true
+    // Sort by updated date (newest first)
+    filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    return filtered.map(ticket => {
+      const client = DataManager.clients.getById(ticket.clientId);
+      const unreadCount = ticket.messages.filter(m => !m.fromAdmin && !m.read).length;
+
+      const categoryIcons = {
+        'project_inquiry': 'fa-project-diagram',
+        'billing': 'fa-file-invoice-dollar',
+        'feature_request': 'fa-lightbulb',
+        'technical_support': 'fa-tools',
+        'general': 'fa-question-circle'
+      };
+
+      const statusClasses = {
+        'open': 'ticket-status-open',
+        'in_progress': 'ticket-status-progress',
+        'resolved': 'ticket-status-resolved',
+        'closed': 'ticket-status-closed'
+      };
+
+      const statusLabels = {
+        'open': 'Open',
+        'in_progress': 'In Progress',
+        'resolved': 'Resolved',
+        'closed': 'Closed'
+      };
+
+      const priorityColors = {
+        'low': '#999',
+        'normal': '#3b82f6',
+        'high': '#f59e0b',
+        'urgent': '#ef4444'
+      };
+
+      return `
+        <div class="admin-ticket-card ${currentAdminTicketId === ticket.id ? 'active' : ''}"
+             onclick="loadAdminTicketConversation('${ticket.id}')"
+             style="background: var(--dashboard-card); border: 1px solid var(--dashboard-border); border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 0.3s ease; ${unreadCount > 0 ? 'border-left: 3px solid var(--dashboard-primary);' : ''}">
+          <div style="display: flex; justify-content: between; align-items: start; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <i class="fas ${categoryIcons[ticket.category]}" style="color: var(--dashboard-primary); margin-top: 0.2rem;"></i>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: var(--dashboard-text); margin-bottom: 0.3rem;">${ticket.subject}</div>
+              <div style="font-size: 0.85rem; color: var(--dashboard-text-muted);">
+                ${client ? `${client.firstName} ${client.lastName}` : 'Unknown Client'}
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.8rem; font-size: 0.8rem;">
+            <span class="${statusClasses[ticket.status]}" style="padding: 0.2rem 0.6rem; border-radius: 12px;">
+              ${statusLabels[ticket.status]}
+            </span>
+            <span style="color: ${priorityColors[ticket.priority]}; font-weight: 600; text-transform: uppercase;">
+              ${ticket.priority}
+            </span>
+            ${unreadCount > 0 ? `<span style="background: var(--dashboard-primary); color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-weight: 600;">${unreadCount}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.filterAdminTickets = function(status) {
+    const tickets = DataManager.tickets.getAll();
+    const listContainer = document.getElementById('tickets-list-container');
+    listContainer.innerHTML = renderAdminTicketsList(tickets, status);
+  };
+
+  window.loadAdminTicketConversation = function(ticketId) {
+    currentAdminTicketId = ticketId;
+    const ticket = DataManager.tickets.getById(ticketId);
+    if (!ticket) return;
+
+    // Mark messages as read (admin reading client messages)
+    DataManager.tickets.markMessagesAsRead(ticketId, true);
+
+    const container = document.getElementById('ticket-conversation-container');
+    container.innerHTML = renderAdminTicketConversation(ticket);
+
+    // Update ticket list to remove unread indicators
+    const listContainer = document.getElementById('tickets-list-container');
+    const filterValue = document.getElementById('ticket-filter').value;
+    listContainer.innerHTML = renderAdminTicketsList(DataManager.tickets.getAll(), filterValue);
+
+    // Scroll to bottom
+    setTimeout(() => {
+      const threadBody = document.getElementById('admin-ticket-thread');
+      if (threadBody) {
+        threadBody.scrollTop = threadBody.scrollHeight;
+      }
+    }, 100);
+
+    updateMessagesBadge();
+  };
+
+  function renderAdminTicketConversation(ticket) {
+    const client = DataManager.clients.getById(ticket.clientId);
+
+    const statusClasses = {
+      'open': 'ticket-status-open',
+      'in_progress': 'ticket-status-progress',
+      'resolved': 'ticket-status-resolved',
+      'closed': 'ticket-status-closed'
+    };
+
+    const statusLabels = {
+      'open': 'Open',
+      'in_progress': 'In Progress',
+      'resolved': 'Resolved',
+      'closed': 'Closed'
+    };
+
+    const categoryLabels = {
+      'project_inquiry': 'Project Inquiry',
+      'billing': 'Billing',
+      'feature_request': 'Feature Request',
+      'technical_support': 'Technical Support',
+      'general': 'General'
+    };
+
+    return `
+      <div class="message-thread">
+        <div class="message-thread-header">
+          <div>
+            <h3>${ticket.subject}</h3>
+            <p style="margin: 0.3rem 0 0 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">
+              ${client ? `${client.firstName} ${client.lastName} (${client.email})` : 'Unknown Client'} •
+              ${categoryLabels[ticket.category] || ticket.category}
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="${statusClasses[ticket.status]}" style="padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">
+              ${statusLabels[ticket.status]}
+            </span>
+            <select
+              onchange="updateTicketStatus('${ticket.id}', this.value)"
+              style="padding: 0.4rem 0.8rem; background: var(--dashboard-card); border: 1px solid var(--dashboard-border); border-radius: 8px; color: var(--dashboard-text); font-size: 0.85rem;">
+              <option value="">Change Status...</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="message-thread-body" id="admin-ticket-thread">
+          ${ticket.messages.length === 0 ? `
+            <div style="text-align: center; color: var(--dashboard-text-muted); padding: 2rem;">
+              <i class="fas fa-comment-slash" style="font-size: 2rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+              <p>No messages yet.</p>
+            </div>
+          ` : ticket.messages.map(msg => `
+            <div class="message-bubble ${msg.fromAdmin ? 'from-admin' : 'from-client'}">
+              <div class="message-bubble-sender">${msg.fromAdmin ? (msg.senderName || 'Admin Team') : (msg.senderName || client.firstName)}</div>
+              <div class="message-bubble-text">${msg.message}</div>
+              <div class="message-bubble-time">${new Date(msg.timestamp).toLocaleString()}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${ticket.status !== 'closed' ? `
+          <div class="message-thread-footer">
+            <div class="message-input-group">
+              <input
+                type="text"
+                id="admin-ticket-message-input"
+                placeholder="Type your reply..."
+                onkeypress="if(event.key==='Enter') sendAdminTicketReply('${ticket.id}')"
+              >
+              <button onclick="sendAdminTicketReply('${ticket.id}')">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        ` : `
+          <div style="text-align: center; padding: 1rem; background: rgba(100, 100, 100, 0.1); color: var(--dashboard-text-muted);">
+            <i class="fas fa-lock"></i> Ticket is closed
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  window.sendAdminTicketReply = function(ticketId) {
+    const input = document.getElementById('admin-ticket-message-input');
+    const message = input.value.trim();
+
+    if (!message) {
+      alert('Please enter a message');
+      return;
+    }
+
+    // Add message to ticket
+    DataManager.tickets.addMessage(ticketId, {
+      fromAdmin: true,
+      senderName: 'Waarheid Support Team',
+      message: message
     });
 
+    // Clear input
     input.value = '';
-    loadClientMessages(clientId);
+
+    // Reload conversation
+    loadAdminTicketConversation(ticketId);
+  };
+
+  window.updateTicketStatus = function(ticketId, newStatus) {
+    if (!newStatus) return;
+
+    DataManager.tickets.updateStatus(ticketId, newStatus);
+
+    // Reload conversation
+    loadAdminTicketConversation(ticketId);
+
+    // Update ticket list
+    const filterValue = document.getElementById('ticket-filter').value;
+    const listContainer = document.getElementById('tickets-list-container');
+    listContainer.innerHTML = renderAdminTicketsList(DataManager.tickets.getAll(), filterValue);
   };
 
   // ============================================
@@ -1483,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function updateMessagesBadge() {
-    const unread = DataManager.messages.getUnread(true).length;
+    const unread = DataManager.tickets.getUnreadCount(null, true);
     const badge = document.getElementById('messages-badge');
     if (badge) {
       badge.textContent = unread;
@@ -1494,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function updateNotificationCount() {
     const pendingConsultations = DataManager.consultations.getByStatus('pending').length;
-    const unreadMessages = DataManager.messages.getUnread(true).length;
+    const unreadMessages = DataManager.tickets.getUnreadCount(null, true);
     const total = pendingConsultations + unreadMessages;
 
     const notificationBadge = document.getElementById('notification-count');
@@ -1509,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ============================================
   document.getElementById('admin-notifications')?.addEventListener('click', function() {
     const pendingConsultations = DataManager.consultations.getByStatus('pending').length;
-    const unreadMessages = DataManager.messages.getUnread(true).length;
+    const unreadMessages = DataManager.tickets.getUnreadCount(null, true);
 
     showModal(`
       <div class="admin-modal-header">
