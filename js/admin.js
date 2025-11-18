@@ -369,6 +369,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const consultations = DataManager.consultations.getAll();
     updateConsultationsBadge();
 
+    // Get unique services and statuses for filters
+    const services = [...new Set(consultations.map(c => c.service).filter(Boolean))];
+    const statuses = [...new Set(consultations.map(c => c.status))];
+
     mainContent.innerHTML = `
       <div class="admin-action-bar">
         <h1>Consultation Requests</h1>
@@ -387,57 +391,117 @@ document.addEventListener('DOMContentLoaded', function() {
           <p>New consultation requests will appear here</p>
         </div>
       ` : `
-        <div class="admin-table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Service</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${consultations.map(c => `
+        <!-- Search and Filter Section -->
+        <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-search"></i> Search</label>
+              <input type="text" id="consultation-search" placeholder="Search by name or email..." onkeyup="filterConsultations()">
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-briefcase"></i> Service</label>
+              <select id="consultation-service-filter" onchange="filterConsultations()">
+                <option value="">All Services</option>
+                ${services.map(service => `<option value="${service}">${service}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-flag"></i> Status</label>
+              <select id="consultation-status-filter" onchange="filterConsultations()">
+                <option value="">All Statuses</option>
+                ${statuses.map(status => `<option value="${status}">${status}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="admin-form-group" style="margin: 0;">
+              <label><i class="fas fa-sort"></i> Sort By</label>
+              <select id="consultation-sort" onchange="filterConsultations()">
+                <option value="date-new">Date (Newest First)</option>
+                <option value="date-old">Date (Oldest First)</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="service">Service (A-Z)</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: flex-end;">
+              <button class="btn-admin secondary" onclick="clearConsultationFilters()" style="width: 100%;">
+                <i class="fas fa-undo"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="consultations-table-container">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
                 <tr>
-                  <td><strong>${c.name || 'N/A'}</strong></td>
-                  <td>${c.email || 'N/A'}</td>
-                  <td>${c.service || 'General'}</td>
-                  <td>${c.preferredDate || 'Flexible'}</td>
-                  <td><span class="status-badge ${c.status}">${c.status}</span></td>
-                  <td>
-                    <div class="table-actions">
-                      <button class="btn-icon" onclick="viewConsultation('${c.id}')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                      </button>
-                      <button class="btn-icon" onclick="editConsultation('${c.id}')" title="Edit">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      ${c.status === 'pending' ? `
-                        <button class="btn-icon success" onclick="approveConsultation('${c.id}')" title="Approve">
-                          <i class="fas fa-check"></i>
-                        </button>
-                        <button class="btn-icon danger" onclick="rejectConsultation('${c.id}')" title="Reject">
-                          <i class="fas fa-times"></i>
-                        </button>
-                        <button class="btn-icon" onclick="convertToProject('${c.id}')" title="Convert to Project">
-                          <i class="fas fa-briefcase"></i>
-                        </button>
-                      ` : ''}
-                      <button class="btn-icon danger" onclick="deleteConsultation('${c.id}')" title="Delete">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Service</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
+              </thead>
+              <tbody id="consultations-table-body">
+                ${renderConsultationRows(consultations)}
+              </tbody>
+            </table>
+          </div>
         </div>
       `}
     `;
+  }
+
+  function renderConsultationRows(consultations) {
+    if (consultations.length === 0) {
+      return `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--dashboard-text-muted);">
+            No consultations match your filters
+          </td>
+        </tr>
+      `;
+    }
+
+    return consultations.map(c => `
+      <tr>
+        <td><strong>${c.name || 'N/A'}</strong></td>
+        <td>${c.email || 'N/A'}</td>
+        <td>${c.service || 'General'}</td>
+        <td>${c.preferredDate || 'Flexible'}</td>
+        <td><span class="status-badge ${c.status}">${c.status}</span></td>
+        <td>
+          <div class="table-actions">
+            <button class="btn-icon" onclick="viewConsultation('${c.id}')" title="View Details">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-icon" onclick="editConsultation('${c.id}')" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            ${c.status === 'pending' ? `
+              <button class="btn-icon success" onclick="approveConsultation('${c.id}')" title="Approve">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn-icon danger" onclick="rejectConsultation('${c.id}')" title="Reject">
+                <i class="fas fa-times"></i>
+              </button>
+              <button class="btn-icon" onclick="convertToProject('${c.id}')" title="Convert to Project">
+                <i class="fas fa-briefcase"></i>
+              </button>
+            ` : ''}
+            <button class="btn-icon danger" onclick="deleteConsultation('${c.id}')" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
   }
 
   window.viewConsultation = function(consultationId) {
@@ -656,6 +720,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.refreshConsultations = function() {
     loadConsultations();
+  };
+
+  window.filterConsultations = function() {
+    const searchTerm = document.getElementById('consultation-search').value.toLowerCase();
+    const serviceFilter = document.getElementById('consultation-service-filter').value;
+    const statusFilter = document.getElementById('consultation-status-filter').value;
+    const sortBy = document.getElementById('consultation-sort').value;
+
+    let consultations = DataManager.consultations.getAll();
+
+    // Apply search filter (name or email)
+    if (searchTerm) {
+      consultations = consultations.filter(c =>
+        (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+        (c.email && c.email.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    // Apply service filter
+    if (serviceFilter) {
+      consultations = consultations.filter(c => c.service === serviceFilter);
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      consultations = consultations.filter(c => c.status === statusFilter);
+    }
+
+    // Apply sorting
+    switch(sortBy) {
+      case 'name':
+        consultations.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        break;
+      case 'name-desc':
+        consultations.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        break;
+      case 'service':
+        consultations.sort((a, b) => (a.service || '').localeCompare(b.service || ''));
+        break;
+      case 'status':
+        consultations.sort((a, b) => (a.status || '').localeCompare(b.status || ''));
+        break;
+      case 'date-new':
+        consultations.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        break;
+      case 'date-old':
+        consultations.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        break;
+    }
+
+    // Update table
+    document.getElementById('consultations-table-body').innerHTML = renderConsultationRows(consultations);
+  };
+
+  window.clearConsultationFilters = function() {
+    document.getElementById('consultation-search').value = '';
+    document.getElementById('consultation-service-filter').value = '';
+    document.getElementById('consultation-status-filter').value = '';
+    document.getElementById('consultation-sort').value = 'date-new';
+    filterConsultations();
   };
 
   // ============================================
