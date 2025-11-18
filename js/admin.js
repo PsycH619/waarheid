@@ -396,6 +396,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.rejectConsultation = function(consultationId) {
     const reason = prompt('Reason for rejection (optional):');
+
+    // Get consultation to find time slot
+    const consultation = DataManager.consultations.getById(consultationId);
+
+    // Release the time slot if it was booked
+    if (consultation && consultation.timeSlotId) {
+      DataManager.timeslots.release(consultation.timeSlotId);
+    }
+
     DataManager.consultations.reject(consultationId, reason);
     refreshConsultations();
   };
@@ -490,6 +499,10 @@ document.addEventListener('DOMContentLoaded', function() {
   window.submitEditConsultation = function(event, consultationId) {
     event.preventDefault();
 
+    const consultation = DataManager.consultations.getById(consultationId);
+    const oldStatus = consultation ? consultation.status : null;
+    const newStatus = document.getElementById('edit-status').value;
+
     const updatedData = {
       name: document.getElementById('edit-name').value,
       email: document.getElementById('edit-email').value,
@@ -497,9 +510,16 @@ document.addEventListener('DOMContentLoaded', function() {
       service: document.getElementById('edit-service').value,
       preferredDate: document.getElementById('edit-date').value,
       preferredTime: document.getElementById('edit-time').value,
-      status: document.getElementById('edit-status').value,
+      status: newStatus,
       message: document.getElementById('edit-message').value
     };
+
+    // Release time slot if status changed to rejected or cancelled
+    if (consultation && consultation.timeSlotId &&
+        (newStatus === 'rejected' || newStatus === 'cancelled') &&
+        oldStatus !== 'rejected' && oldStatus !== 'cancelled') {
+      DataManager.timeslots.release(consultation.timeSlotId);
+    }
 
     DataManager.consultations.update(consultationId, updatedData);
     closeModal();
@@ -545,9 +565,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-plus"></i>
             Bulk Create
           </button>
-          <button class="btn-admin" onclick="switchToListView()">
-            <i class="fas fa-list"></i>
-            List View
+          <button class="btn-admin secondary" onclick="showBulkDeleteModal()" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;">
+            <i class="fas fa-trash-alt"></i>
+            Bulk Delete
           </button>
         </div>
       </div>
@@ -722,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="table-actions">
               ${!slot.available && slot.consultationId ? `
-                <button class="btn-icon" onclick="viewConsultation('${slot.consultationId}'); closeModal();" title="View">
+                <button class="btn-icon" onclick="viewConsultationFromSlot('${slot.consultationId}')" title="View Booking">
                   <i class="fas fa-eye"></i>
                 </button>
               ` : ''}
@@ -756,6 +776,13 @@ document.addEventListener('DOMContentLoaded', function() {
         </button>
       </div>
     `);
+  };
+
+  window.viewConsultationFromSlot = function(consultationId) {
+    closeModal();
+    setTimeout(() => {
+      viewConsultation(consultationId);
+    }, 100);
   };
 
   window.showQuickAddSlot = function() {
@@ -815,82 +842,6 @@ document.addEventListener('DOMContentLoaded', function() {
     alert('Time slot created successfully!');
     renderCalendar(currentCalendarDate);
   };
-
-  window.switchToListView = function() {
-    const slots = DataManager.timeslots.getAll().sort((a, b) =>
-      new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime)
-    );
-
-    mainContent.innerHTML = `
-      <div class="admin-action-bar">
-        <h1>Time Slots List</h1>
-        <div class="admin-actions">
-          <button class="btn-admin secondary" onclick="showCreateTimeSlotsModal()">
-            <i class="fas fa-plus"></i>
-            Bulk Create
-          </button>
-          <button class="btn-admin" onclick="loadTimeSlots()">
-            <i class="fas fa-calendar"></i>
-            Calendar View
-          </button>
-        </div>
-      </div>
-
-      ${slots.length === 0 ? `
-        <div class="empty-state">
-          <i class="fas fa-clock"></i>
-          <h3>No Time Slots</h3>
-          <p>Create time slots to allow clients to book consultations</p>
-        </div>
-      ` : `
-        <div class="admin-table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Status</th>
-                <th>Booked By</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${slots.map(slot => {
-                const client = slot.bookedBy ? DataManager.clients.getById(slot.bookedBy) : null;
-                const isPast = new Date(slot.date + 'T' + slot.startTime) < new Date();
-                return `
-                  <tr style="${isPast ? 'opacity: 0.5;' : ''}">
-                    <td><strong>${new Date(slot.date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</strong></td>
-                    <td>${slot.startTime} - ${slot.endTime}</td>
-                    <td>
-                      ${slot.available ?
-                        '<span class="status-badge" style="background: #d1fae5; color: #065f46;">Available</span>' :
-                        '<span class="status-badge" style="background: #fee2e2; color: #991b1b;">Booked</span>'}
-                    </td>
-                    <td>${client ? client.firstName + ' ' + client.lastName : '-'}</td>
-                    <td>
-                      <div class="table-actions">
-                        ${!slot.available && slot.consultationId ? `
-                          <button class="btn-icon" onclick="viewConsultation('${slot.consultationId}')" title="View Consultation">
-                            <i class="fas fa-eye"></i>
-                          </button>
-                        ` : ''}
-                        ${slot.available ? `
-                          <button class="btn-icon danger" onclick="deleteTimeSlot('${slot.id}')" title="Delete">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        ` : ''}
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `}
-    `;
-  }
 
   window.showCreateTimeSlotsModal = function() {
     showModal(`
@@ -1038,6 +989,176 @@ document.addEventListener('DOMContentLoaded', function() {
       DataManager.timeslots.delete(slotId);
       loadTimeSlots();
     }
+  };
+
+  window.showBulkDeleteModal = function() {
+    const allSlots = DataManager.timeslots.getAll();
+    const availableSlots = allSlots.filter(s => s.available);
+    const bookedSlots = allSlots.filter(s => !s.available);
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3>Bulk Delete Time Slots</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">
+          <p style="margin: 0; color: #ef4444; font-size: 0.9rem;">
+            <i class="fas fa-exclamation-triangle"></i> Warning: Only available (unbooked) slots can be deleted. Booked slots will be skipped.
+          </p>
+        </div>
+
+        <div style="display: grid; gap: 1rem; margin-bottom: 1rem;">
+          <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>Total Slots:</strong> ${allSlots.length}
+              </div>
+              <div>
+                <span style="color: #10b981;">Available: ${availableSlots.length}</span> |
+                <span style="color: #ef4444;">Booked: ${bookedSlots.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <button class="btn-admin secondary" onclick="deleteAllAvailableSlots()" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; justify-content: space-between; display: flex; align-items: center;">
+            <span><i class="fas fa-trash"></i> Delete All Available Slots</span>
+            <span style="font-size: 0.9rem; opacity: 0.8;">(${availableSlots.length} slots)</span>
+          </button>
+
+          <div style="border-top: 1px solid var(--dashboard-border); padding-top: 1rem; margin-top: 0.5rem;">
+            <h4 style="margin-bottom: 1rem;">Delete by Date Range</h4>
+            <form id="bulk-delete-form" style="display: grid; gap: 1rem;">
+              <div class="admin-form-group">
+                <label>Start Date *</label>
+                <input type="date" id="bulk-delete-start" required>
+              </div>
+              <div class="admin-form-group">
+                <label>End Date *</label>
+                <input type="date" id="bulk-delete-end" required>
+              </div>
+              <button type="button" class="btn-admin secondary" onclick="deleteSlotsInRange()" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444;">
+                <i class="fas fa-calendar-times"></i> Delete Slots in Range
+              </button>
+            </form>
+          </div>
+
+          <div style="border-top: 1px solid var(--dashboard-border); padding-top: 1rem; margin-top: 0.5rem;">
+            <h4 style="margin-bottom: 1rem;">Delete by Specific Date</h4>
+            <div style="display: grid; gap: 1rem;">
+              <div class="admin-form-group">
+                <label>Select Date *</label>
+                <input type="date" id="bulk-delete-specific-date">
+              </div>
+              <button type="button" class="btn-admin secondary" onclick="deleteSlotsOnDate()" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444;">
+                <i class="fas fa-calendar-day"></i> Delete All Slots on This Date
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Close</button>
+      </div>
+    `);
+  };
+
+  window.deleteAllAvailableSlots = function() {
+    const availableSlots = DataManager.timeslots.getAll().filter(s => s.available);
+
+    if (availableSlots.length === 0) {
+      alert('No available slots to delete.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete all ${availableSlots.length} available time slots? This action cannot be undone.`)) {
+      return;
+    }
+
+    let deletedCount = 0;
+    availableSlots.forEach(slot => {
+      DataManager.timeslots.delete(slot.id);
+      deletedCount++;
+    });
+
+    closeModal();
+    alert(`Successfully deleted ${deletedCount} available time slots.`);
+    renderCalendar(currentCalendarDate);
+  };
+
+  window.deleteSlotsInRange = function() {
+    const startDate = document.getElementById('bulk-delete-start').value;
+    const endDate = document.getElementById('bulk-delete-end').value;
+
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates.');
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      alert('Start date must be before or equal to end date.');
+      return;
+    }
+
+    const allSlots = DataManager.timeslots.getAll();
+    const slotsInRange = allSlots.filter(slot => {
+      const slotDate = slot.date;
+      return slotDate >= startDate && slotDate <= endDate && slot.available;
+    });
+
+    if (slotsInRange.length === 0) {
+      alert('No available slots found in this date range.');
+      return;
+    }
+
+    if (!confirm(`Found ${slotsInRange.length} available slots between ${new Date(startDate).toLocaleDateString()} and ${new Date(endDate).toLocaleDateString()}. Delete them all?`)) {
+      return;
+    }
+
+    let deletedCount = 0;
+    slotsInRange.forEach(slot => {
+      DataManager.timeslots.delete(slot.id);
+      deletedCount++;
+    });
+
+    closeModal();
+    alert(`Successfully deleted ${deletedCount} time slots.`);
+    renderCalendar(currentCalendarDate);
+  };
+
+  window.deleteSlotsOnDate = function() {
+    const dateStr = document.getElementById('bulk-delete-specific-date').value;
+
+    if (!dateStr) {
+      alert('Please select a date.');
+      return;
+    }
+
+    const allSlots = DataManager.timeslots.getAll();
+    const slotsOnDate = allSlots.filter(slot => slot.date === dateStr && slot.available);
+
+    if (slotsOnDate.length === 0) {
+      alert('No available slots found on this date.');
+      return;
+    }
+
+    if (!confirm(`Found ${slotsOnDate.length} available slots on ${new Date(dateStr).toLocaleDateString()}. Delete them all?`)) {
+      return;
+    }
+
+    let deletedCount = 0;
+    slotsOnDate.forEach(slot => {
+      DataManager.timeslots.delete(slot.id);
+      deletedCount++;
+    });
+
+    closeModal();
+    alert(`Successfully deleted ${deletedCount} time slots on ${new Date(dateStr).toLocaleDateString()}.`);
+    renderCalendar(currentCalendarDate);
   };
 
   // ============================================
