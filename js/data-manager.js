@@ -465,6 +465,154 @@ window.DataManager = (function() {
     }
   };
 
+  // ============================================
+  // Ticket Management (Support/Chat System)
+  // ============================================
+  const TicketManager = {
+    getAll: function() {
+      return JSON.parse(localStorage.getItem('waarheid_tickets') || '[]');
+    },
+
+    getById: function(ticketId) {
+      const tickets = this.getAll();
+      return tickets.find(t => t.id === ticketId);
+    },
+
+    getByClient: function(clientId) {
+      const tickets = this.getAll();
+      return tickets.filter(t => t.clientId === clientId);
+    },
+
+    getByStatus: function(status) {
+      const tickets = this.getAll();
+      return tickets.filter(t => t.status === status);
+    },
+
+    create: function(ticketData) {
+      const tickets = this.getAll();
+      const newTicket = {
+        id: DataManager.generateId('ticket'),
+        clientId: ticketData.clientId,
+        subject: ticketData.subject,
+        category: ticketData.category,
+        priority: ticketData.priority || 'normal',
+        status: 'open', // open, in_progress, resolved, closed
+        messages: ticketData.initialMessage ? [{
+          id: DataManager.generateId('msg'),
+          fromAdmin: false,
+          message: ticketData.initialMessage,
+          timestamp: new Date().toISOString(),
+          attachments: ticketData.attachments || []
+        }] : [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        assignedTo: null,
+        tags: ticketData.tags || []
+      };
+      tickets.push(newTicket);
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return newTicket;
+    },
+
+    addMessage: function(ticketId, messageData) {
+      const tickets = this.getAll();
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return null;
+
+      const newMessage = {
+        id: DataManager.generateId('msg'),
+        fromAdmin: messageData.fromAdmin || false,
+        senderName: messageData.senderName,
+        message: messageData.message,
+        timestamp: new Date().toISOString(),
+        attachments: messageData.attachments || [],
+        read: false
+      };
+
+      ticket.messages.push(newMessage);
+      ticket.updatedAt = new Date().toISOString();
+
+      // Update status to in_progress if admin replies
+      if (messageData.fromAdmin && ticket.status === 'open') {
+        ticket.status = 'in_progress';
+      }
+
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return newMessage;
+    },
+
+    updateStatus: function(ticketId, status) {
+      const tickets = this.getAll();
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return null;
+
+      ticket.status = status;
+      ticket.updatedAt = new Date().toISOString();
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return ticket;
+    },
+
+    updatePriority: function(ticketId, priority) {
+      const tickets = this.getAll();
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return null;
+
+      ticket.priority = priority;
+      ticket.updatedAt = new Date().toISOString();
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return ticket;
+    },
+
+    assignTo: function(ticketId, adminName) {
+      const tickets = this.getAll();
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return null;
+
+      ticket.assignedTo = adminName;
+      ticket.updatedAt = new Date().toISOString();
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return ticket;
+    },
+
+    markMessagesAsRead: function(ticketId, isAdmin) {
+      const tickets = this.getAll();
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return null;
+
+      ticket.messages.forEach(msg => {
+        // Mark messages as read based on who is viewing
+        if ((isAdmin && !msg.fromAdmin) || (!isAdmin && msg.fromAdmin)) {
+          msg.read = true;
+        }
+      });
+
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      return ticket;
+    },
+
+    getUnreadCount: function(clientId, isAdmin = false) {
+      const tickets = isAdmin ? this.getAll() : this.getByClient(clientId);
+      let unreadCount = 0;
+
+      tickets.forEach(ticket => {
+        ticket.messages.forEach(msg => {
+          if ((isAdmin && !msg.fromAdmin && !msg.read) || (!isAdmin && msg.fromAdmin && !msg.read)) {
+            unreadCount++;
+          }
+        });
+      });
+
+      return unreadCount;
+    },
+
+    delete: function(ticketId) {
+      const tickets = this.getAll();
+      const filtered = tickets.filter(t => t.id !== ticketId);
+      localStorage.setItem('waarheid_tickets', JSON.stringify(filtered));
+      return true;
+    }
+  };
+
   // Initialize data on load
   initializeData();
 
@@ -476,6 +624,7 @@ window.DataManager = (function() {
     messages: MessageManager,
     invoices: InvoiceManager,
     analytics: AnalyticsManager,
+    tickets: TicketManager,
 
     // Utility functions
     generateId: function(prefix) {

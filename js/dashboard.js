@@ -377,17 +377,16 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ============================================
-  // Messages Notification
+  // Messages/Tickets Notification
   // ============================================
   function updateMessagesNotification() {
     if (!clientId) return;
 
-    const unreadMessages = DataManager.messages.getUnread(false).filter(m => m.clientId === clientId);
+    const unreadCount = DataManager.tickets.getUnreadCount(clientId, false);
     const notificationBadge = document.querySelector('.notification-badge');
-    const navBadge = document.querySelector('#messages-badge');
 
-    if (notificationBadge && unreadMessages.length > 0) {
-      notificationBadge.textContent = unreadMessages.length;
+    if (notificationBadge && unreadCount > 0) {
+      notificationBadge.textContent = unreadCount;
       notificationBadge.style.display = 'block';
     } else if (notificationBadge) {
       notificationBadge.style.display = 'none';
@@ -395,14 +394,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update nav badge if exists
     const messagesLink = document.querySelector('[data-section="messages"]');
-    if (messagesLink && unreadMessages.length > 0) {
+    if (messagesLink) {
       let badge = messagesLink.querySelector('.nav-badge');
-      if (!badge) {
-        badge = document.createElement('span');
-        badge.className = 'nav-badge';
-        messagesLink.appendChild(badge);
+      if (unreadCount > 0) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'nav-badge';
+          messagesLink.appendChild(badge);
+        }
+        badge.textContent = unreadCount;
+        badge.style.display = 'inline-block';
+      } else if (badge) {
+        badge.style.display = 'none';
       }
-      badge.textContent = unreadMessages.length;
     }
   }
 
@@ -857,9 +861,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================
-  // Messages Section
+  // Messages/Tickets Section
   // ============================================
+  let currentView = 'list'; // 'list' or 'conversation'
+  let currentTicketId = null;
+
   function loadMessagesSection() {
+    // Always start with ticket list view
+    currentView = 'list';
+    currentTicketId = null;
+    loadTicketsList();
+  }
+
+  function loadTicketsList() {
     const messagesList = document.getElementById('messages-list');
 
     if (!clientId) {
@@ -867,55 +881,431 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    const messages = DataManager.messages.getAll().filter(m => m.clientId === clientId);
+    const tickets = DataManager.tickets.getByClient(clientId);
 
-    if (messages.length === 0) {
-      messagesList.innerHTML = `
-        <div style="text-align: center; padding: 4rem 2rem;">
-          <i class="fas fa-comments" style="font-size: 4rem; color: rgba(255,255,255,0.2); margin-bottom: 1.5rem;"></i>
-          <h3 style="color: var(--dashboard-text); margin-bottom: 0.5rem;">No Messages Yet</h3>
-          <p style="color: var(--dashboard-text-muted);">Start a conversation with the Waarheid Marketing team.</p>
-          <button class="btn-primary" onclick="openNewMessage()" style="margin-top: 2rem;">
-            <i class="fas fa-plus"></i> New Message
+    // Count unread messages
+    const unreadCount = DataManager.tickets.getUnreadCount(clientId, false);
+
+    // Header with create button
+    const headerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+          <h3 style="color: var(--dashboard-text); margin: 0 0 0.5rem 0;">Support Tickets</h3>
+          <p style="color: var(--dashboard-text-muted); margin: 0;">
+            ${tickets.length} ${tickets.length === 1 ? 'ticket' : 'tickets'}
+            ${unreadCount > 0 ? `• ${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}` : ''}
+          </p>
+        </div>
+        <button class="btn-primary" onclick="openNewTicketModal()">
+          <i class="fas fa-plus"></i> New Ticket
+        </button>
+      </div>
+    `;
+
+    if (tickets.length === 0) {
+      messagesList.innerHTML = headerHTML + `
+        <div style="text-align: center; padding: 4rem 2rem; background: var(--dashboard-card); border-radius: 12px;">
+          <i class="fas fa-ticket-alt" style="font-size: 4rem; color: rgba(255,255,255,0.2); margin-bottom: 1.5rem;"></i>
+          <h3 style="color: var(--dashboard-text); margin-bottom: 0.5rem;">No Tickets Yet</h3>
+          <p style="color: var(--dashboard-text-muted); margin-bottom: 2rem;">Create a support ticket to get help from our team.</p>
+          <button class="btn-primary" onclick="openNewTicketModal()">
+            <i class="fas fa-plus"></i> Create Your First Ticket
           </button>
         </div>
       `;
       return;
     }
 
-    // Sort messages by date (newest first)
-    messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Sort tickets by updated date (newest first)
+    tickets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-    messagesList.innerHTML = messages.map(message => {
-      const date = new Date(message.timestamp);
-      const isFromAdmin = message.fromAdmin;
-
-      return `
-        <div class="message-card ${message.read ? 'read' : 'unread'}">
-          <div class="message-header">
-            <div class="message-sender">
-              <i class="fas ${isFromAdmin ? 'fa-user-tie' : 'fa-user'}"></i>
-              <span>${isFromAdmin ? 'Waarheid Marketing Team' : 'You'}</span>
-            </div>
-            <div class="message-date">${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
-          </div>
-          <div class="message-subject">${message.subject || 'No Subject'}</div>
-          <div class="message-content">${message.message}</div>
-          ${!message.read && !isFromAdmin ? '<div class="message-unread-badge">New</div>' : ''}
-        </div>
-      `;
-    }).join('');
-
-    // Mark messages as read
-    messages.forEach(msg => {
-      if (!msg.read && msg.fromAdmin) {
-        DataManager.messages.markAsRead(msg.id);
-      }
-    });
+    const ticketsHTML = tickets.map(ticket => renderTicketCard(ticket)).join('');
+    messagesList.innerHTML = headerHTML + `<div class="tickets-grid">${ticketsHTML}</div>`;
 
     // Update notification count
     updateMessagesNotification();
   }
+
+  function renderTicketCard(ticket) {
+    const statusClasses = {
+      'open': 'ticket-status-open',
+      'in_progress': 'ticket-status-progress',
+      'resolved': 'ticket-status-resolved',
+      'closed': 'ticket-status-closed'
+    };
+
+    const statusLabels = {
+      'open': 'Open',
+      'in_progress': 'In Progress',
+      'resolved': 'Resolved',
+      'closed': 'Closed'
+    };
+
+    const categoryIcons = {
+      'project_inquiry': 'fa-project-diagram',
+      'billing': 'fa-file-invoice-dollar',
+      'feature_request': 'fa-lightbulb',
+      'technical_support': 'fa-tools',
+      'general': 'fa-question-circle'
+    };
+
+    const categoryLabels = {
+      'project_inquiry': 'Project Inquiry',
+      'billing': 'Billing',
+      'feature_request': 'Feature Request',
+      'technical_support': 'Technical Support',
+      'general': 'General'
+    };
+
+    const priorityClasses = {
+      'low': 'priority-low',
+      'normal': 'priority-normal',
+      'high': 'priority-high',
+      'urgent': 'priority-urgent'
+    };
+
+    // Get last message
+    const lastMessage = ticket.messages[ticket.messages.length - 1];
+    const lastMessageDate = lastMessage ? new Date(lastMessage.timestamp) : new Date(ticket.createdAt);
+    const lastMessageText = lastMessage ? lastMessage.message : 'No messages yet';
+
+    // Count unread messages in this ticket
+    const unreadInTicket = ticket.messages.filter(m => m.fromAdmin && !m.read).length;
+
+    // Get relative time
+    const getRelativeTime = (date) => {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    };
+
+    return `
+      <div class="ticket-card ${unreadInTicket > 0 ? 'has-unread' : ''}" onclick="openTicketConversation('${ticket.id}')">
+        <div class="ticket-card-header">
+          <div class="ticket-meta">
+            <span class="ticket-category">
+              <i class="fas ${categoryIcons[ticket.category] || 'fa-ticket-alt'}"></i>
+              ${categoryLabels[ticket.category] || ticket.category}
+            </span>
+            <span class="ticket-priority ${priorityClasses[ticket.priority]}">
+              ${ticket.priority}
+            </span>
+          </div>
+          <span class="ticket-status ${statusClasses[ticket.status]}">
+            ${statusLabels[ticket.status] || ticket.status}
+          </span>
+        </div>
+        <h4 class="ticket-subject">${ticket.subject}</h4>
+        <div class="ticket-last-message">
+          <div class="last-message-preview">${lastMessageText.substring(0, 100)}${lastMessageText.length > 100 ? '...' : ''}</div>
+          <div class="ticket-footer">
+            <span class="ticket-messages-count">
+              <i class="fas fa-comments"></i> ${ticket.messages.length} ${ticket.messages.length === 1 ? 'message' : 'messages'}
+            </span>
+            <span class="ticket-updated">${getRelativeTime(lastMessageDate)}</span>
+            ${unreadInTicket > 0 ? `<span class="ticket-unread-badge">${unreadInTicket} new</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============================================
+  // Ticket Conversation View
+  // ============================================
+  window.openTicketConversation = function(ticketId) {
+    currentTicketId = ticketId;
+    currentView = 'conversation';
+
+    const ticket = DataManager.tickets.getById(ticketId);
+    if (!ticket) {
+      alert('Ticket not found');
+      return;
+    }
+
+    // Mark messages as read
+    DataManager.tickets.markMessagesAsRead(ticketId, false);
+
+    const messagesList = document.getElementById('messages-list');
+
+    const statusClasses = {
+      'open': 'ticket-status-open',
+      'in_progress': 'ticket-status-progress',
+      'resolved': 'ticket-status-resolved',
+      'closed': 'ticket-status-closed'
+    };
+
+    const statusLabels = {
+      'open': 'Open',
+      'in_progress': 'In Progress',
+      'resolved': 'Resolved',
+      'closed': 'Closed'
+    };
+
+    const categoryLabels = {
+      'project_inquiry': 'Project Inquiry',
+      'billing': 'Billing',
+      'feature_request': 'Feature Request',
+      'technical_support': 'Technical Support',
+      'general': 'General'
+    };
+
+    // Render conversation view
+    messagesList.innerHTML = `
+      <div class="ticket-conversation">
+        <!-- Back button and header -->
+        <div class="conversation-header">
+          <button class="btn-back" onclick="loadTicketsList()">
+            <i class="fas fa-arrow-left"></i> Back to Tickets
+          </button>
+          <div class="conversation-title">
+            <h3>${ticket.subject}</h3>
+            <div class="conversation-meta">
+              <span class="ticket-category-badge">${categoryLabels[ticket.category] || ticket.category}</span>
+              <span class="ticket-status ${statusClasses[ticket.status]}">${statusLabels[ticket.status]}</span>
+              <span class="ticket-id">Ticket #${ticket.id.split('_')[ticket.id.split('_').length - 1].substring(0, 8)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages thread -->
+        <div class="messages-thread" id="messages-thread">
+          ${ticket.messages.length === 0 ? `
+            <div style="text-align: center; padding: 3rem; color: var(--dashboard-text-muted);">
+              <i class="fas fa-comment-slash" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+              <p>No messages yet. Start the conversation below.</p>
+            </div>
+          ` : ticket.messages.map(msg => renderConversationMessage(msg)).join('')}
+        </div>
+
+        <!-- Reply form -->
+        ${ticket.status !== 'closed' ? `
+          <div class="reply-form">
+            <form id="ticket-reply-form" onsubmit="sendTicketReply(event, '${ticket.id}')">
+              <div class="reply-input-container">
+                <textarea
+                  id="reply-message"
+                  placeholder="Type your message here..."
+                  rows="3"
+                  required
+                  style="width: 100%; padding: 1rem; background: var(--dashboard-card); border: 1px solid var(--dashboard-border); border-radius: 8px; color: var(--dashboard-text); font-family: inherit; resize: vertical;"
+                ></textarea>
+              </div>
+              <div class="reply-actions">
+                <button type="submit" class="btn-primary">
+                  <i class="fas fa-paper-plane"></i> Send Reply
+                </button>
+              </div>
+            </form>
+          </div>
+        ` : `
+          <div class="ticket-closed-notice">
+            <i class="fas fa-lock"></i> This ticket is closed. Contact support to reopen.
+          </div>
+        `}
+      </div>
+    `;
+
+    // Scroll to bottom of messages
+    setTimeout(() => {
+      const thread = document.getElementById('messages-thread');
+      if (thread) {
+        thread.scrollTop = thread.scrollHeight;
+      }
+    }, 100);
+
+    // Update notification count
+    updateMessagesNotification();
+  };
+
+  function renderConversationMessage(msg) {
+    const date = new Date(msg.timestamp);
+    const isFromAdmin = msg.fromAdmin;
+
+    return `
+      <div class="conversation-message ${isFromAdmin ? 'from-admin' : 'from-client'}">
+        <div class="message-avatar">
+          <i class="fas ${isFromAdmin ? 'fa-user-tie' : 'fa-user'}"></i>
+        </div>
+        <div class="message-bubble">
+          <div class="message-sender-name">
+            ${isFromAdmin ? (msg.senderName || 'Waarheid Support Team') : 'You'}
+          </div>
+          <div class="message-text">${msg.message}</div>
+          <div class="message-timestamp">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.sendTicketReply = function(event, ticketId) {
+    event.preventDefault();
+
+    const messageTextarea = document.getElementById('reply-message');
+    const messageText = messageTextarea.value.trim();
+
+    if (!messageText) {
+      alert('Please enter a message');
+      return;
+    }
+
+    // Add message to ticket
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const senderName = userData.firstName && userData.lastName ?
+      `${userData.firstName} ${userData.lastName}` :
+      (userData.firstName || 'Client');
+
+    DataManager.tickets.addMessage(ticketId, {
+      fromAdmin: false,
+      senderName: senderName,
+      message: messageText
+    });
+
+    // Clear form
+    messageTextarea.value = '';
+
+    // Reload conversation
+    openTicketConversation(ticketId);
+  };
+
+  // ============================================
+  // New Ticket Modal
+  // ============================================
+  window.openNewTicketModal = function() {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'new-ticket-modal';
+    modal.className = 'ticket-modal-overlay active';
+    modal.innerHTML = `
+      <div class="ticket-modal-container">
+        <div class="ticket-modal-header">
+          <h2>Create New Support Ticket</h2>
+          <button class="modal-close-btn" onclick="closeNewTicketModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="ticket-modal-body">
+          <form id="new-ticket-form" onsubmit="submitNewTicket(event)">
+            <div class="form-group">
+              <label for="ticket-category">
+                <i class="fas fa-tag"></i> Category *
+              </label>
+              <select id="ticket-category" required>
+                <option value="">Select a category...</option>
+                <option value="project_inquiry">Project Inquiry</option>
+                <option value="billing">Billing Question</option>
+                <option value="technical_support">Technical Support</option>
+                <option value="feature_request">Feature Request</option>
+                <option value="general">General Question</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-priority">
+                <i class="fas fa-exclamation-circle"></i> Priority
+              </label>
+              <select id="ticket-priority">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-subject">
+                <i class="fas fa-heading"></i> Subject *
+              </label>
+              <input
+                type="text"
+                id="ticket-subject"
+                placeholder="Brief description of your issue or question"
+                required
+                maxlength="200"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-message">
+                <i class="fas fa-comment"></i> Message *
+              </label>
+              <textarea
+                id="ticket-message"
+                rows="6"
+                placeholder="Please provide details about your request..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="ticket-modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeNewTicketModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-paper-plane"></i> Create Ticket
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeNewTicketModal = function() {
+    const modal = document.getElementById('new-ticket-modal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.submitNewTicket = function(event) {
+    event.preventDefault();
+
+    const category = document.getElementById('ticket-category').value;
+    const priority = document.getElementById('ticket-priority').value;
+    const subject = document.getElementById('ticket-subject').value.trim();
+    const message = document.getElementById('ticket-message').value.trim();
+
+    if (!category || !subject || !message) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Create ticket
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const ticket = DataManager.tickets.create({
+      clientId: clientId,
+      subject: subject,
+      category: category,
+      priority: priority,
+      initialMessage: message
+    });
+
+    // Close modal
+    closeNewTicketModal();
+
+    // Show success message
+    alert('Ticket created successfully! Our team will respond soon.');
+
+    // Reload tickets list
+    loadTicketsList();
+  };
+
+  // Replace old openNewMessage function
+  window.openNewMessage = function() {
+    openNewTicketModal();
+  };
 
   // ============================================
   // Schedule Section

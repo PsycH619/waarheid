@@ -45,6 +45,9 @@
       // Initialize demo analytics
       this.initializeAnalytics();
 
+      // Initialize demo tickets
+      this.initializeTickets();
+
       // Mark as initialized
       localStorage.setItem('waarheid_db_initialized', 'true');
       localStorage.setItem('waarheid_db_init_date', new Date().toISOString());
@@ -62,6 +65,7 @@
         'waarheid_messages',
         'waarheid_invoices',
         'waarheid_analytics',
+        'waarheid_tickets',
         'waarheid_db_initialized',
         'waarheid_db_init_date'
       ];
@@ -434,6 +438,134 @@
       console.log(`Initialized analytics for ${Object.keys(analytics).length} clients`);
     },
 
+    // Initialize demo tickets
+    initializeTickets: function() {
+      const tickets = [
+        {
+          id: 'ticket_001',
+          clientId: 'client_demo_001',
+          subject: 'Question about SEO campaign progress',
+          category: 'project_inquiry',
+          priority: 'normal',
+          status: 'resolved',
+          messages: [
+            {
+              id: 'msg_t1_001',
+              fromAdmin: false,
+              senderName: 'John Smith',
+              message: 'Hi! I wanted to check on the progress of our SEO campaign. When can I expect to see the first results?',
+              timestamp: new Date('2024-11-10T09:00:00').toISOString(),
+              attachments: [],
+              read: true
+            },
+            {
+              id: 'msg_t1_002',
+              fromAdmin: true,
+              senderName: 'Waarheid Support Team',
+              message: 'Hello John! Great to hear from you. Your SEO campaign is progressing well! You should start seeing improved rankings within 2-3 weeks. We\'ll send you a detailed report by the end of this week.',
+              timestamp: new Date('2024-11-10T10:30:00').toISOString(),
+              attachments: [],
+              read: true
+            },
+            {
+              id: 'msg_t1_003',
+              fromAdmin: false,
+              senderName: 'John Smith',
+              message: 'Perfect, thank you! Looking forward to the report.',
+              timestamp: new Date('2024-11-10T11:00:00').toISOString(),
+              attachments: [],
+              read: true
+            }
+          ],
+          createdAt: new Date('2024-11-10T09:00:00').toISOString(),
+          updatedAt: new Date('2024-11-10T11:00:00').toISOString(),
+          assignedTo: 'Admin Team',
+          tags: ['seo', 'project']
+        },
+        {
+          id: 'ticket_002',
+          clientId: 'client_demo_001',
+          subject: 'Website launch date confirmation',
+          category: 'billing',
+          priority: 'high',
+          status: 'in_progress',
+          messages: [
+            {
+              id: 'msg_t2_001',
+              fromAdmin: false,
+              senderName: 'John Smith',
+              message: 'Can you confirm the exact launch date for our new website? We need to coordinate with our marketing team.',
+              timestamp: new Date('2024-11-17T14:00:00').toISOString(),
+              attachments: [],
+              read: true
+            },
+            {
+              id: 'msg_t2_002',
+              fromAdmin: true,
+              senderName: 'Waarheid Support Team',
+              message: 'Hi John, we\'re targeting November 29th for the official launch. Final testing is scheduled for November 25-27. I\'ll send you the detailed launch timeline by tomorrow.',
+              timestamp: new Date('2024-11-17T16:30:00').toISOString(),
+              attachments: [],
+              read: false
+            }
+          ],
+          createdAt: new Date('2024-11-17T14:00:00').toISOString(),
+          updatedAt: new Date('2024-11-17T16:30:00').toISOString(),
+          assignedTo: 'Admin Team',
+          tags: ['website', 'launch']
+        },
+        {
+          id: 'ticket_003',
+          clientId: 'client_demo_002',
+          subject: 'Request for additional social media platforms',
+          category: 'feature_request',
+          priority: 'normal',
+          status: 'open',
+          messages: [
+            {
+              id: 'msg_t3_001',
+              fromAdmin: false,
+              senderName: 'Sarah Johnson',
+              message: 'Hello! We\'d like to expand our social media campaign to include TikTok and LinkedIn. Can you provide a quote for adding these platforms?',
+              timestamp: new Date('2024-11-18T10:00:00').toISOString(),
+              attachments: [],
+              read: false
+            }
+          ],
+          createdAt: new Date('2024-11-18T10:00:00').toISOString(),
+          updatedAt: new Date('2024-11-18T10:00:00').toISOString(),
+          assignedTo: null,
+          tags: ['social-media', 'expansion']
+        },
+        {
+          id: 'ticket_004',
+          clientId: 'client_demo_003',
+          subject: 'Technical support - Email automation not working',
+          category: 'technical_support',
+          priority: 'high',
+          status: 'open',
+          messages: [
+            {
+              id: 'msg_t4_001',
+              fromAdmin: false,
+              senderName: 'Mike Brown',
+              message: 'Hi, I\'m having issues with the automated email workflows. The welcome email doesn\'t seem to be triggering when new customers sign up. Can you help?',
+              timestamp: new Date('2024-11-18T13:00:00').toISOString(),
+              attachments: [],
+              read: false
+            }
+          ],
+          createdAt: new Date('2024-11-18T13:00:00').toISOString(),
+          updatedAt: new Date('2024-11-18T13:00:00').toISOString(),
+          assignedTo: null,
+          tags: ['automation', 'urgent']
+        }
+      ];
+
+      localStorage.setItem('waarheid_tickets', JSON.stringify(tickets));
+      console.log(`Initialized ${tickets.length} demo tickets`);
+    },
+
     // Reset database (for testing)
     reset: function() {
       const confirmed = confirm('Are you sure you want to reset the database? This will delete all data and reinitialize with demo data.');
@@ -453,6 +585,7 @@
         messages: JSON.parse(localStorage.getItem('waarheid_messages') || '[]'),
         invoices: JSON.parse(localStorage.getItem('waarheid_invoices') || '[]'),
         analytics: JSON.parse(localStorage.getItem('waarheid_analytics') || '{}'),
+        tickets: JSON.parse(localStorage.getItem('waarheid_tickets') || '[]'),
         exportDate: new Date().toISOString()
       };
 
@@ -477,6 +610,7 @@
       const consultations = JSON.parse(localStorage.getItem('waarheid_consultations') || '[]');
       const messages = JSON.parse(localStorage.getItem('waarheid_messages') || '[]');
       const invoices = JSON.parse(localStorage.getItem('waarheid_invoices') || '[]');
+      const tickets = JSON.parse(localStorage.getItem('waarheid_tickets') || '[]');
 
       return {
         initialized: true,
@@ -486,7 +620,8 @@
           projects: projects.length,
           consultations: consultations.length,
           messages: messages.length,
-          invoices: invoices.length
+          invoices: invoices.length,
+          tickets: tickets.length
         }
       };
     }
