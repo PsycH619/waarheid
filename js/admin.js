@@ -140,6 +140,15 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'analytics':
         loadAnalytics();
         break;
+      case 'users':
+        loadUsers();
+        break;
+      case 'profile':
+        loadProfile();
+        break;
+      case 'settings':
+        loadSettings();
+        break;
     }
   }
 
@@ -3820,6 +3829,865 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ============================================
+  // Profile Section
+  // ============================================
+  function loadProfile() {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const userRole = localStorage.getItem('userRole') || 'admin';
+
+    mainContent.innerHTML = `
+      <div class="admin-action-bar">
+        <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; max-width: 1200px;">
+        <!-- Profile Sidebar -->
+        <div>
+          <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; text-align: center;">
+            <div style="width: 150px; height: 150px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #c50077, #ff0095); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-${userRole === 'admin' ? 'crown' : 'user'}" style="font-size: 4rem; color: white;"></i>
+            </div>
+            <h2 style="margin: 0 0 0.5rem 0;">${userData.firstName || 'Admin'} ${userData.lastName || 'User'}</h2>
+            <p style="color: var(--dashboard-text-muted); margin: 0 0 1rem 0;">${userEmail}</p>
+            <span class="status-badge active" style="text-transform: capitalize;">${userRole}</span>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+              <button class="btn-admin" onclick="editProfilePicture()" style="width: 100%; margin-bottom: 0.5rem;">
+                <i class="fas fa-camera"></i> Change Photo
+              </button>
+              <button class="btn-admin secondary" onclick="loadSettings()" style="width: 100%;">
+                <i class="fas fa-cog"></i> Settings
+              </button>
+            </div>
+          </div>
+
+          <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px; margin-top: 1rem;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1rem;"><i class="fas fa-chart-line"></i> Quick Stats</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Active Projects:</span>
+                <strong>${DataManager.projects.getAll().filter(p => p.status === 'in_progress').length}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Total Clients:</span>
+                <strong>${DataManager.clients.getAll().length}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--dashboard-text-muted);">Pending Requests:</span>
+                <strong>${DataManager.consultations.getByStatus('pending').length}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div>
+          <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+              <h2 style="margin: 0;"><i class="fas fa-info-circle"></i> Personal Information</h2>
+              <button class="btn-admin" onclick="editProfile()">
+                <i class="fas fa-edit"></i> Edit Profile
+              </button>
+            </div>
+
+            <form id="profile-form">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="admin-form-group">
+                  <label>First Name</label>
+                  <input type="text" id="profile-firstname" value="${userData.firstName || ''}" readonly>
+                </div>
+                <div class="admin-form-group">
+                  <label>Last Name</label>
+                  <input type="text" id="profile-lastname" value="${userData.lastName || ''}" readonly>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="admin-form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="profile-email" value="${userEmail}" readonly>
+                </div>
+                <div class="admin-form-group">
+                  <label>Phone Number</label>
+                  <input type="tel" id="profile-phone" value="${userData.phone || ''}" readonly>
+                </div>
+              </div>
+
+              <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label>Company/Organization</label>
+                <input type="text" id="profile-company" value="${userData.company || ''}" readonly>
+              </div>
+
+              <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label>Address</label>
+                <input type="text" id="profile-address" value="${userData.address || ''}" readonly>
+              </div>
+
+              <div class="admin-form-group">
+                <label>Bio</label>
+                <textarea id="profile-bio" rows="4" readonly>${userData.bio || ''}</textarea>
+              </div>
+            </form>
+          </div>
+
+          <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; margin-top: 1.5rem;">
+            <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-clock"></i> Account Activity</h2>
+            <div style="display: grid; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <span><i class="fas fa-calendar-plus" style="margin-right: 0.5rem; color: #c50077;"></i> Account Created:</span>
+                <strong>${userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <span><i class="fas fa-sign-in-alt" style="margin-right: 0.5rem; color: #c50077;"></i> Last Login:</span>
+                <strong>Today</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.editProfile = function() {
+    const inputs = ['profile-firstname', 'profile-lastname', 'profile-phone', 'profile-company', 'profile-address', 'profile-bio'];
+    const isEditing = document.getElementById('profile-firstname').hasAttribute('readonly');
+
+    if (isEditing) {
+      // Enable editing
+      inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.removeAttribute('readonly');
+      });
+
+      // Show save/cancel buttons
+      const form = document.getElementById('profile-form');
+      if (form && !document.getElementById('profile-actions')) {
+        form.insertAdjacentHTML('afterend', `
+          <div id="profile-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button class="btn-admin" onclick="saveProfile()" style="flex: 1;">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+            <button class="btn-admin secondary" onclick="loadProfile()" style="flex: 1;">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        `);
+      }
+
+      // Update edit button
+      event.target.innerHTML = '<i class="fas fa-times"></i> Cancel Edit';
+      event.target.onclick = () => loadProfile();
+    }
+  };
+
+  window.saveProfile = function() {
+    const userData = {
+      firstName: document.getElementById('profile-firstname').value,
+      lastName: document.getElementById('profile-lastname').value,
+      phone: document.getElementById('profile-phone').value,
+      company: document.getElementById('profile-company').value,
+      address: document.getElementById('profile-address').value,
+      bio: document.getElementById('profile-bio').value,
+      email: localStorage.getItem('userEmail'),
+      createdAt: JSON.parse(localStorage.getItem('userData') || '{}').createdAt || new Date().toISOString()
+    };
+
+    localStorage.setItem('userData', JSON.stringify(userData));
+    alert('Profile updated successfully!');
+    loadProfile();
+  };
+
+  window.editProfilePicture = function() {
+    alert('Profile picture upload functionality would be implemented here with a file upload dialog.');
+  };
+
+  // ============================================
+  // Settings Section
+  // ============================================
+  function loadSettings() {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userEmail = localStorage.getItem('userEmail') || '';
+
+    mainContent.innerHTML = `
+      <div class="admin-action-bar">
+        <h1><i class="fas fa-cog"></i> Settings</h1>
+      </div>
+
+      <div style="max-width: 900px;">
+        <!-- Account Settings -->
+        <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-user-shield"></i> Account Security</h2>
+
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; margin: 0 0 1rem 0;">Change Password</h3>
+            <form id="change-password-form" onsubmit="changePassword(event)">
+              <div class="admin-form-group" style="margin-bottom: 1rem;">
+                <label>Current Password</label>
+                <input type="password" id="current-password" required>
+              </div>
+              <div class="admin-form-group" style="margin-bottom: 1rem;">
+                <label>New Password</label>
+                <input type="password" id="new-password" required minlength="8">
+              </div>
+              <div class="admin-form-group" style="margin-bottom: 1rem;">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirm-password" required>
+              </div>
+              <button type="submit" class="btn-admin">
+                <i class="fas fa-key"></i> Update Password
+              </button>
+            </form>
+          </div>
+
+          <div style="padding: 1.5rem; background: rgba(197, 0, 119, 0.1); border: 1px solid rgba(197, 0, 119, 0.3); border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">
+                  <i class="fas fa-shield-alt" style="color: #c50077;"></i> Two-Factor Authentication
+                </h3>
+                <p style="margin: 0; color: var(--dashboard-text-muted); font-size: 0.9rem;">
+                  Add an extra layer of security to your account
+                </p>
+              </div>
+              <button class="btn-admin secondary" onclick="enable2FA()">
+                <i class="fas fa-plus"></i> Enable
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification Preferences -->
+        <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-bell"></i> Notification Preferences</h2>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Email Notifications</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Receive email updates about your projects</div>
+              </div>
+              <input type="checkbox" id="email-notifications" checked onchange="saveNotificationSettings()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">SMS Notifications</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Get text messages for urgent updates</div>
+              </div>
+              <input type="checkbox" id="sms-notifications" onchange="saveNotificationSettings()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">New Consultation Alerts</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Notify me when new consultation requests arrive</div>
+              </div>
+              <input type="checkbox" id="consultation-alerts" checked onchange="saveNotificationSettings()" style="width: 20px; height: 20px;">
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Project Updates</div>
+                <div style="font-size: 0.9rem; color: var(--dashboard-text-muted);">Get notified about project milestones and changes</div>
+              </div>
+              <input type="checkbox" id="project-updates" checked onchange="saveNotificationSettings()" style="width: 20px; height: 20px;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-palette"></i> Appearance</h2>
+
+          <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+            <label>Theme</label>
+            <select id="theme-select" onchange="changeTheme(this.value)">
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+              <option value="auto">Auto (System Preference)</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group">
+            <label>Language</label>
+            <select id="language-select" onchange="changeLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="nl">Nederlands</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 2rem; border-radius: 12px;">
+          <h2 style="margin: 0 0 1rem 0; color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h2>
+          <p style="margin: 0 0 1.5rem 0; color: var(--dashboard-text-muted);">
+            Irreversible and destructive actions
+          </p>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn-admin secondary" onclick="clearAllData()" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
+              <i class="fas fa-trash"></i> Clear All Data
+            </button>
+            <button class="btn-admin secondary" onclick="deleteAccount()" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
+              <i class="fas fa-user-times"></i> Delete Account
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.changePassword = function(event) {
+    event.preventDefault();
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match!');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters long!');
+      return;
+    }
+
+    // In a real app, verify current password against stored hash
+    alert('Password changed successfully!');
+    document.getElementById('change-password-form').reset();
+  };
+
+  window.enable2FA = function() {
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-shield-alt"></i> Enable Two-Factor Authentication</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <p>Two-factor authentication adds an extra layer of security to your account.</p>
+        <ol style="margin: 1rem 0; padding-left: 1.5rem;">
+          <li>Install an authenticator app (Google Authenticator, Authy, etc.)</li>
+          <li>Scan the QR code below</li>
+          <li>Enter the 6-digit code from your app</li>
+        </ol>
+        <div style="text-align: center; padding: 2rem; background: white; border-radius: 8px; margin: 1rem 0;">
+          <div style="width: 200px; height: 200px; background: #f3f4f6; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: #6b7280;">
+            QR Code Placeholder
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label>Enter 6-digit code</label>
+          <input type="text" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="confirm2FA()">
+          <i class="fas fa-check"></i> Enable 2FA
+        </button>
+      </div>
+    `);
+  };
+
+  window.confirm2FA = function() {
+    alert('Two-factor authentication has been enabled!');
+    closeModal();
+    loadSettings();
+  };
+
+  window.saveNotificationSettings = function() {
+    const settings = {
+      emailNotifications: document.getElementById('email-notifications').checked,
+      smsNotifications: document.getElementById('sms-notifications').checked,
+      consultationAlerts: document.getElementById('consultation-alerts').checked,
+      projectUpdates: document.getElementById('project-updates').checked
+    };
+
+    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+  };
+
+  window.changeTheme = function(theme) {
+    localStorage.setItem('theme', theme);
+    alert(`Theme changed to: ${theme}`);
+  };
+
+  window.changeLanguage = function(language) {
+    localStorage.setItem('language', language);
+    alert(`Language changed to: ${language}`);
+  };
+
+  window.clearAllData = function() {
+    if (confirm('Are you sure? This will delete ALL data including projects, clients, and consultations. This action cannot be undone!')) {
+      if (confirm('FINAL WARNING: This will permanently delete everything. Are you absolutely sure?')) {
+        DataManager.clearAll();
+        alert('All data has been cleared!');
+        loadOverview();
+      }
+    }
+  };
+
+  window.deleteAccount = function() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone!')) {
+      alert('Account deletion would be processed here. For this demo, the account will not be deleted.');
+    }
+  };
+
+  // ============================================
+  // User Management Section
+  // ============================================
+  function loadUsers() {
+    const users = DataManager.users.getAll();
+
+    mainContent.innerHTML = `
+      <div class="admin-action-bar">
+        <h1><i class="fas fa-users-cog"></i> User Management</h1>
+        <div class="admin-actions">
+          <button class="btn-admin" onclick="showCreateUserModal()">
+            <i class="fas fa-user-plus"></i>
+            Add New User
+          </button>
+        </div>
+      </div>
+
+      ${users.length === 0 ? `
+        <div class="empty-state">
+          <i class="fas fa-users-cog"></i>
+          <h3>No Users Yet</h3>
+          <p>Click "Add New User" to create your first user account</p>
+        </div>
+      ` : `
+        <!-- User Stats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px;">
+            <div style="font-size: 2rem; font-weight: 700; color: #c50077;">${users.length}</div>
+            <div style="color: var(--dashboard-text-muted); margin-top: 0.5rem;">Total Users</div>
+          </div>
+          <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px;">
+            <div style="font-size: 2rem; font-weight: 700; color: #22c55e;">${users.filter(u => u.status === 'active').length}</div>
+            <div style="color: var(--dashboard-text-muted); margin-top: 0.5rem;">Active Users</div>
+          </div>
+          <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px;">
+            <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">${users.filter(u => u.role === 'admin').length}</div>
+            <div style="color: var(--dashboard-text-muted); margin-top: 0.5rem;">Administrators</div>
+          </div>
+          <div style="background: var(--dashboard-card); padding: 1.5rem; border-radius: 12px;">
+            <div style="font-size: 2rem; font-weight: 700; color: #3b82f6;">${users.filter(u => u.role === 'client').length}</div>
+            <div style="color: var(--dashboard-text-muted); margin-top: 0.5rem;">Clients</div>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(user => `
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #c50077, #ff0095); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-${user.role === 'admin' ? 'crown' : 'user'}" style="color: white;"></i>
+                      </div>
+                      <div>
+                        <strong>${user.firstName} ${user.lastName}</strong>
+                        ${user.company ? `<br><small style="color: var(--dashboard-text-muted);">${user.company}</small>` : ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td>${user.email}</td>
+                  <td>
+                    <span class="status-badge ${user.role}" style="text-transform: capitalize;">
+                      ${user.role}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-badge ${user.status}">
+                      ${user.status}
+                    </span>
+                  </td>
+                  <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn-icon" onclick="viewUser('${user.id}')" title="View Details">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn-icon" onclick="editUserRole('${user.id}')" title="Edit Role & Permissions">
+                        <i class="fas fa-user-shield"></i>
+                      </button>
+                      <button class="btn-icon" onclick="editUser('${user.id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      ${user.status === 'active' ? `
+                        <button class="btn-icon danger" onclick="suspendUser('${user.id}')" title="Suspend">
+                          <i class="fas fa-ban"></i>
+                        </button>
+                      ` : `
+                        <button class="btn-icon success" onclick="activateUser('${user.id}')" title="Activate">
+                          <i class="fas fa-check-circle"></i>
+                        </button>
+                      `}
+                      <button class="btn-icon danger" onclick="deleteUser('${user.id}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    `;
+  }
+
+  window.showCreateUserModal = function() {
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="create-user-form" onsubmit="createUser(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="admin-form-group">
+              <label>First Name *</label>
+              <input type="text" id="user-firstname" required>
+            </div>
+            <div class="admin-form-group">
+              <label>Last Name *</label>
+              <input type="text" id="user-lastname" required>
+            </div>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label>Email Address *</label>
+            <input type="email" id="user-email" required>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label>Password *</label>
+            <input type="password" id="user-password" required minlength="8">
+            <small style="color: var(--dashboard-text-muted);">Minimum 8 characters</small>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="admin-form-group">
+              <label>Role *</label>
+              <select id="user-role" required>
+                <option value="client">Client</option>
+                <option value="staff">Staff</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="admin-form-group">
+              <label>Status *</label>
+              <select id="user-status" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label>Phone</label>
+            <input type="tel" id="user-phone">
+          </div>
+
+          <div class="admin-form-group">
+            <label>Company</label>
+            <input type="text" id="user-company">
+          </div>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="document.getElementById('create-user-form').requestSubmit()">
+          <i class="fas fa-save"></i> Create User
+        </button>
+      </div>
+    `);
+  };
+
+  window.createUser = function(event) {
+    event.preventDefault();
+
+    try {
+      const userData = {
+        firstName: document.getElementById('user-firstname').value,
+        lastName: document.getElementById('user-lastname').value,
+        email: document.getElementById('user-email').value,
+        password: document.getElementById('user-password').value,
+        role: document.getElementById('user-role').value,
+        status: document.getElementById('user-status').value,
+        phone: document.getElementById('user-phone').value,
+        company: document.getElementById('user-company').value
+      };
+
+      DataManager.users.create(userData);
+      alert('User created successfully!');
+      closeModal();
+      loadUsers();
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  };
+
+  window.viewUser = function(userId) {
+    const user = DataManager.users.getById(userId);
+    if (!user) return;
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-user-circle"></i> User Details</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div style="width: 100px; height: 100px; margin: 0 auto 1rem; background: linear-gradient(135deg, #c50077, #ff0095); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-${user.role === 'admin' ? 'crown' : 'user'}" style="font-size: 2.5rem; color: white;"></i>
+          </div>
+          <h2 style="margin: 0 0 0.5rem 0;">${user.firstName} ${user.lastName}</h2>
+          <p style="color: var(--dashboard-text-muted); margin: 0;">${user.email}</p>
+        </div>
+
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Role:</strong>
+            <span class="status-badge ${user.role}" style="text-transform: capitalize; width: fit-content;">${user.role}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Status:</strong>
+            <span class="status-badge ${user.status}" style="width: fit-content;">${user.status}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Phone:</strong>
+            <span>${user.phone || 'N/A'}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Company:</strong>
+            <span>${user.company || 'N/A'}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Created:</strong>
+            <span>${new Date(user.createdAt).toLocaleDateString()}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <strong>Last Login:</strong>
+            <span>${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Close</button>
+        <button class="btn-admin" onclick="editUser('${user.id}')">
+          <i class="fas fa-edit"></i> Edit User
+        </button>
+      </div>
+    `);
+  };
+
+  window.editUser = function(userId) {
+    const user = DataManager.users.getById(userId);
+    if (!user) return;
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-user-edit"></i> Edit User</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="edit-user-form" onsubmit="saveUserChanges(event, '${userId}')">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="admin-form-group">
+              <label>First Name</label>
+              <input type="text" id="edit-firstname" value="${user.firstName}" required>
+            </div>
+            <div class="admin-form-group">
+              <label>Last Name</label>
+              <input type="text" id="edit-lastname" value="${user.lastName}" required>
+            </div>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label>Email</label>
+            <input type="email" id="edit-email" value="${user.email}" required>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label>Phone</label>
+            <input type="tel" id="edit-phone" value="${user.phone || ''}">
+          </div>
+
+          <div class="admin-form-group">
+            <label>Company</label>
+            <input type="text" id="edit-company" value="${user.company || ''}">
+          </div>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="document.getElementById('edit-user-form').requestSubmit()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    `);
+  };
+
+  window.saveUserChanges = function(event, userId) {
+    event.preventDefault();
+
+    try {
+      DataManager.users.update(userId, {
+        firstName: document.getElementById('edit-firstname').value,
+        lastName: document.getElementById('edit-lastname').value,
+        email: document.getElementById('edit-email').value,
+        phone: document.getElementById('edit-phone').value,
+        company: document.getElementById('edit-company').value
+      });
+
+      alert('User updated successfully!');
+      closeModal();
+      loadUsers();
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  };
+
+  window.editUserRole = function(userId) {
+    const user = DataManager.users.getById(userId);
+    if (!user) return;
+
+    const permissions = user.permissions || {};
+    const resources = ['dashboard', 'users', 'clients', 'projects', 'consultations', 'messages', 'invoices', 'analytics', 'settings'];
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3><i class="fas fa-user-shield"></i> Manage Role & Permissions</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <div class="admin-form-group" style="margin-bottom: 2rem;">
+          <label>Role</label>
+          <select id="role-select" onchange="loadRolePermissions(this.value)">
+            <option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option>
+            <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
+            <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
+            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+        </div>
+
+        <h4 style="margin: 0 0 1rem 0;">Permissions</h4>
+        <div id="permissions-grid" style="display: grid; gap: 0.5rem;">
+          ${resources.map(resource => {
+            const resPerms = permissions[resource] || {};
+            return `
+              <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; text-transform: capitalize;">${resource}</div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                  ${['view', 'edit', 'delete'].map(action => `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                      <input type="checkbox"
+                             class="perm-checkbox"
+                             data-resource="${resource}"
+                             data-action="${action}"
+                             ${resPerms[action] ? 'checked' : ''}>
+                      <span style="text-transform: capitalize;">${action}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="saveUserPermissions('${userId}')">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    `);
+  };
+
+  window.loadRolePermissions = function(role) {
+    const defaultPerms = DataManager.users.getDefaultPermissions(role);
+    const checkboxes = document.querySelectorAll('.perm-checkbox');
+
+    checkboxes.forEach(cb => {
+      const resource = cb.dataset.resource;
+      const action = cb.dataset.action;
+      cb.checked = defaultPerms[resource] && defaultPerms[resource][action];
+    });
+  };
+
+  window.saveUserPermissions = function(userId) {
+    const role = document.getElementById('role-select').value;
+    const permissions = {};
+
+    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+      const resource = cb.dataset.resource;
+      const action = cb.dataset.action;
+
+      if (!permissions[resource]) {
+        permissions[resource] = {};
+      }
+
+      permissions[resource][action] = cb.checked;
+    });
+
+    DataManager.users.update(userId, { role, permissions });
+    alert('Role and permissions updated successfully!');
+    closeModal();
+    loadUsers();
+  };
+
+  window.suspendUser = function(userId) {
+    if (confirm('Are you sure you want to suspend this user?')) {
+      DataManager.users.suspend(userId);
+      alert('User suspended successfully!');
+      loadUsers();
+    }
+  };
+
+  window.activateUser = function(userId) {
+    DataManager.users.activate(userId);
+    alert('User activated successfully!');
+    loadUsers();
+  };
+
+  window.deleteUser = function(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone!')) {
+      DataManager.users.delete(userId);
+      alert('User deleted successfully!');
+      loadUsers();
+    }
+  };
+
+  // ============================================
   // User Menu
   // ============================================
   const userMenuToggle = document.querySelector('.user-menu-toggle');
@@ -3837,6 +4705,19 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Handle dropdown navigation links
+  const dropdownLinks = document.querySelectorAll('.user-dropdown a[data-section]');
+  dropdownLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const section = this.getAttribute('data-section');
+      if (section) {
+        userMenu.classList.remove('active');
+        navigateToSection(section);
+      }
+    });
+  });
 
   // Logout
   const logoutBtn = document.querySelector('.logout-btn');
