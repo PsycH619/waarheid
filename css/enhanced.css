@@ -61,24 +61,17 @@
   scroll-behavior: smooth;
   padding-bottom: 1rem;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.category-cards:active {
+  cursor: grabbing;
 }
 
 .category-cards::-webkit-scrollbar {
-  height: 8px;
-}
-
-.category-cards::-webkit-scrollbar-track {
-  background: var(--color-light);
-  border-radius: 10px;
-}
-
-.category-cards::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
-  border-radius: 10px;
-}
-
-.category-cards::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  display: none;
 }
 
 .category-card {
@@ -435,24 +428,17 @@
   scroll-behavior: smooth;
   padding-bottom: 1rem;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.portfolio-grid:active {
+  cursor: grabbing;
 }
 
 .portfolio-grid::-webkit-scrollbar {
-  height: 8px;
-}
-
-.portfolio-grid::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-.portfolio-grid::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
-  border-radius: 10px;
-}
-
-.portfolio-grid::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  display: none;
 }
 
 .portfolio-card {
@@ -828,4 +814,34 @@
   height: 100%;
   z-index: 1;
   pointer-events: none;
+}
+
+/* Card Navigation Dots */
+.card-nav-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+}
+
+.card-nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(197, 0, 119, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.card-nav-dot.active {
+  background: var(--gradient-primary);
+  width: 30px;
+  border-radius: 5px;
+}
+
+.card-nav-dot:hover {
+  background: rgba(197, 0, 119, 0.6);
 }
