@@ -250,9 +250,14 @@
         <div class="booking-form-section">
           <h2 style="margin-bottom: 2rem;">Schedule Your Call</h2>
 
-          <form class="contact-form">
+          <form class="contact-form" id="booking-form">
             <!-- Hidden honeypot for spam protection -->
             <input type="text" name="website" style="display: none;">
+
+            <!-- Hidden fields for selected date and time -->
+            <input type="hidden" id="selected-date" name="selected_date">
+            <input type="hidden" id="selected-time" name="selected_time">
+            <input type="hidden" id="selected-slot-id" name="selected_slot_id">
 
             <div class="form-group">
               <label for="booking-name">Full Name *</label>
@@ -278,49 +283,15 @@
               <label for="booking-service">What are you interested in? *</label>
               <select id="booking-service" name="service" required>
                 <option value="">Select a service</option>
-                <option value="marketing">Marketing & Branding</option>
-                <option value="development">Web & App Development</option>
-                <option value="automation">Automation & Business Intelligence</option>
-                <option value="multiple">Multiple Services</option>
-                <option value="not-sure">Not Sure Yet</option>
+                <option value="Website Development">Website Development</option>
+                <option value="Brand Identity">Brand Identity</option>
+                <option value="Digital Marketing">Digital Marketing</option>
+                <option value="SEO Optimization">SEO Optimization</option>
+                <option value="Social Media Management">Social Media Management</option>
+                <option value="Content Creation">Content Creation</option>
+                <option value="E-commerce Solutions">E-commerce Solutions</option>
+                <option value="Consulting">Consulting</option>
               </select>
-            </div>
-
-            <div class="form-group">
-              <label for="booking-budget">Approximate Budget</label>
-              <select id="booking-budget" name="budget">
-                <option value="">Select budget range</option>
-                <option value="small">€2,000 - €5,000</option>
-                <option value="medium">€5,000 - €15,000</option>
-                <option value="large">€15,000 - €50,000</option>
-                <option value="enterprise">€50,000+</option>
-                <option value="not-sure">Not Sure Yet</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Preferred Day *</label>
-              <select name="preferred_day" required>
-                <option value="">Select a day</option>
-                <option value="monday">Monday</option>
-                <option value="tuesday">Tuesday</option>
-                <option value="wednesday">Wednesday</option>
-                <option value="thursday">Thursday</option>
-                <option value="friday">Friday</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Preferred Time *</label>
-              <div class="time-slots">
-                <div class="time-slot" data-time="09:00">09:00</div>
-                <div class="time-slot" data-time="10:00">10:00</div>
-                <div class="time-slot" data-time="11:00">11:00</div>
-                <div class="time-slot" data-time="14:00">14:00</div>
-                <div class="time-slot" data-time="15:00">15:00</div>
-                <div class="time-slot" data-time="16:00">16:00</div>
-              </div>
-              <input type="hidden" name="preferred_time" id="selected-time" required>
             </div>
 
             <div class="form-group">
@@ -328,7 +299,26 @@
               <textarea id="booking-message" name="message" rows="4" placeholder="What are your goals? Any specific challenges you're facing?"></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 1rem;">
+            <!-- Interactive Calendar Section -->
+            <div style="margin: 2rem 0;">
+              <h3 style="margin-bottom: 1rem; color: var(--color-dark);">
+                <i class="fas fa-calendar-alt"></i> Select Date & Time
+              </h3>
+              <p style="color: var(--color-text-light); margin-bottom: 1.5rem;">
+                Choose a date from the calendar below, then select your preferred time slot.
+              </p>
+
+              <!-- Calendar will be rendered here -->
+              <div id="booking-calendar"></div>
+
+              <!-- Time slots will appear here after selecting a date -->
+              <div id="time-slots-container"></div>
+
+              <!-- Confirmation message will appear here -->
+              <div id="selection-confirmation"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 1rem; margin-top: 2rem;">
               <i class="fas fa-calendar-check"></i> Book My Free Consultation
             </button>
 
@@ -390,56 +380,10 @@
   </footer>
 
   <script src="js/data-manager.js"></script>
-  <script src="js/data-manager.js"></script>
   <script src="js/database-init.js"></script>
   <script src="js/auth-state.js"></script>
   <script src="js/main.js"></script>
   <script src="js/enhanced.js"></script>
-  <script>
-    // Time slot selection
-    document.querySelectorAll('.time-slot').forEach(slot => {
-      slot.addEventListener('click', function() {
-        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-        this.classList.add('selected');
-        document.getElementById('selected-time').value = this.getAttribute('data-time');
-      });
-    });
-
-    // Consultation booking form submission
-    document.querySelector('.contact-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData);
-
-      // Create consultation request
-      const consultation = DataManager.consultations.create({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        company: data.company || null,
-        service: data.service,
-        budget: data.budget || null,
-        preferredDate: data.preferred_day,
-        preferredTime: data.preferred_time,
-        message: data.message || null
-      });
-
-      // Show success message
-      alert('Thank you for your consultation request! We will contact you soon to confirm your appointment.');
-
-      // Reset form
-      this.reset();
-      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-
-      // If user is logged in, redirect to dashboard
-      if (localStorage.getItem('authToken')) {
-        setTimeout(() => {
-          const isAdmin = localStorage.getItem('userRole') === 'admin';
-          window.location.href = isAdmin ? 'admin-dashboard.html' : 'dashboard.html';
-        }, 1500);
-      }
-    });
-  </script>
+  <script src="js/booking.js"></script>
 </body>
 </html>
