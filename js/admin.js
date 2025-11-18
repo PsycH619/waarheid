@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <i class="fas fa-dollar-sign"></i>
             </div>
           </div>
-          <div class="admin-stat-value">€{totalRevenue.toLocaleString()}</div>
+          <div class="admin-stat-value">€${totalRevenue.toLocaleString()}</div>
           <div class="admin-stat-label">Total Revenue</div>
         </div>
 
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span style="font-size: 0.8rem;">${p.progress}%</span>
                       </div>
                     </td>
-                    <td>€{(p.budget || 0).toLocaleString()}</td>
+                    <td>€${(p.budget || 0).toLocaleString()}</td>
                     <td>
                       <div class="table-actions">
                         <button class="btn-icon" onclick="editProject('${p.id}')" title="Edit">
@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <div class="admin-form-row">
             <div class="admin-form-group">
-              <label>Budget ($)</label>
+              <label>Budget (€)</label>
               <input type="number" name="budget" min="0" step="100">
             </div>
 
@@ -653,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <div class="admin-form-group">
-              <label>Budget ($)</label>
+              <label>Budget (€)</label>
               <input type="number" name="budget" min="0" step="100" value="${project.budget || 0}">
             </div>
           </div>
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <ul style="list-style: none; padding: 0;">
             ${invoices.map(i => `
               <li style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>${i.invoiceNumber}</strong> - €{i.amount}</span>
+                <span><strong>${i.invoiceNumber}</strong> - €${i.amount}</span>
                 <span class="status-badge ${i.status}">${i.status}</span>
               </li>
             `).join('')}
@@ -1381,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td><strong>${inv.invoiceNumber}</strong></td>
                     <td>${client ? client.firstName + ' ' + client.lastName : 'N/A'}</td>
                     <td>${project ? project.title : 'N/A'}</td>
-                    <td>€{(inv.amount || 0).toLocaleString()}</td>
+                    <td>€${(inv.amount || 0).toLocaleString()}</td>
                     <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'}</td>
                     <td><span class="status-badge ${inv.status}">${inv.status}</span></td>
                     <td>
@@ -1454,7 +1454,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <div class="admin-form-row">
             <div class="admin-form-group">
-              <label>Amount ($) *</label>
+              <label>Amount (€) *</label>
               <input type="number" name="amount" min="0" step="0.01" required>
             </div>
 
@@ -1509,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <div><strong>Client:</strong> ${client ? client.firstName + ' ' + client.lastName : 'N/A'}</div>
           <div><strong>Project:</strong> ${project ? project.title : 'N/A'}</div>
           <div><strong>Description:</strong> ${invoice.description}</div>
-          <div><strong>Amount:</strong> €{(invoice.amount || 0).toLocaleString()}</div>
+          <div><strong>Amount:</strong> €${(invoice.amount || 0).toLocaleString()}</div>
           <div><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</div>
           <div><strong>Status:</strong> <span class="status-badge ${invoice.status}">${invoice.status}</span></div>
           ${invoice.paidDate ? `<div><strong>Paid Date:</strong> ${new Date(invoice.paidDate).toLocaleDateString()}</div>` : ''}
@@ -1608,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="kpi-content">
             <span class="kpi-label">Revenue Generated</span>
-            <span class="kpi-value">$42.8K</span>
+            <span class="kpi-value">€42.8K</span>
             <span class="kpi-change positive">
               <i class="fas fa-arrow-up"></i> 22.1%
             </span>
