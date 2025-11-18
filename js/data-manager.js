@@ -299,6 +299,13 @@ window.DataManager = (function() {
         return project;
       }
       return null;
+    },
+
+    delete: function(consultationId) {
+      const consultations = this.getAll();
+      const filtered = consultations.filter(c => c.id !== consultationId);
+      localStorage.setItem('waarheid_consultations', JSON.stringify(filtered));
+      return true;
     }
   };
 
