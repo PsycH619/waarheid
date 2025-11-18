@@ -95,17 +95,341 @@
         // Add event listeners
         this.attachUserMenuListeners();
       } else {
-        // Show sign in/sign up buttons
+        // Show single account button
         const authButtonsHTML = `
           <a href="booking.html" class="btn-book">Book Consultation</a>
-          <div class="auth-buttons">
-            <a href="signin.html" class="btn-signin">Sign In</a>
-            <a href="signup.html" class="btn-signup">Sign Up</a>
-          </div>
+          <button class="btn-account" onclick="WaarheidAuth.openAuthModal()">
+            <i class="fas fa-user"></i>
+            Account
+          </button>
         `;
 
         navMenu.insertAdjacentHTML('beforeend', authButtonsHTML);
       }
+    },
+
+    // Open authentication modal
+    openAuthModal: function(mode = 'signin') {
+      // Create modal if it doesn't exist
+      let modal = document.getElementById('auth-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'auth-modal';
+        modal.className = 'auth-modal-overlay';
+        modal.innerHTML = `
+          <div class="auth-modal-container">
+            <button class="auth-modal-close" onclick="WaarheidAuth.closeAuthModal()">
+              <i class="fas fa-times"></i>
+            </button>
+
+            <div class="auth-modal-tabs">
+              <button class="auth-tab active" data-tab="signin" onclick="WaarheidAuth.switchAuthTab('signin')">
+                Sign In
+              </button>
+              <button class="auth-tab" data-tab="signup" onclick="WaarheidAuth.switchAuthTab('signup')">
+                Sign Up
+              </button>
+            </div>
+
+            <!-- Sign In Form -->
+            <div class="auth-form-container active" id="signin-container">
+              <h2>Welcome Back</h2>
+              <p class="auth-subtitle">Sign in to access your dashboard</p>
+
+              <form id="modal-signin-form">
+                <div class="form-group">
+                  <label for="modal-signin-email">
+                    <i class="fas fa-envelope"></i>
+                    Email Address
+                  </label>
+                  <input type="email" id="modal-signin-email" required placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                  <label for="modal-signin-password">
+                    <i class="fas fa-lock"></i>
+                    Password
+                  </label>
+                  <input type="password" id="modal-signin-password" required placeholder="Enter your password">
+                </div>
+
+                <div class="form-options">
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="remember">
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                  <i class="fas fa-sign-in-alt"></i>
+                  Sign In
+                </button>
+              </form>
+
+              <div class="auth-divider"><span>or continue with</span></div>
+
+              <div class="social-auth">
+                <button class="social-btn google">
+                  <i class="fab fa-google"></i>
+                  Google
+                </button>
+                <button class="social-btn microsoft">
+                  <i class="fab fa-microsoft"></i>
+                  Microsoft
+                </button>
+              </div>
+
+              <div class="admin-login-link">
+                <a href="admin-login.html"><i class="fas fa-crown"></i> Admin Login</a>
+              </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="auth-form-container" id="signup-container">
+              <h2>Create Account</h2>
+              <p class="auth-subtitle">Join Waarheid Marketing today</p>
+
+              <form id="modal-signup-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="modal-signup-firstname">
+                      <i class="fas fa-user"></i>
+                      First Name
+                    </label>
+                    <input type="text" id="modal-signup-firstname" required placeholder="John">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="modal-signup-lastname">
+                      <i class="fas fa-user"></i>
+                      Last Name
+                    </label>
+                    <input type="text" id="modal-signup-lastname" required placeholder="Doe">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="modal-signup-company">
+                    <i class="fas fa-building"></i>
+                    Company Name
+                  </label>
+                  <input type="text" id="modal-signup-company" placeholder="Your company (optional)">
+                </div>
+
+                <div class="form-group">
+                  <label for="modal-signup-email">
+                    <i class="fas fa-envelope"></i>
+                    Email Address
+                  </label>
+                  <input type="email" id="modal-signup-email" required placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                  <label for="modal-signup-password">
+                    <i class="fas fa-lock"></i>
+                    Password
+                  </label>
+                  <input type="password" id="modal-signup-password" required placeholder="Create a password" minlength="8">
+                  <small class="form-hint">At least 8 characters</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="modal-signup-confirm">
+                    <i class="fas fa-lock"></i>
+                    Confirm Password
+                  </label>
+                  <input type="password" id="modal-signup-confirm" required placeholder="Confirm your password">
+                </div>
+
+                <div class="form-options">
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="terms" required>
+                    <span>I agree to the <a href="#" class="link">Terms of Service</a></span>
+                  </label>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                  <i class="fas fa-user-plus"></i>
+                  Create Account
+                </button>
+              </form>
+
+              <div class="auth-divider"><span>or sign up with</span></div>
+
+              <div class="social-auth">
+                <button class="social-btn google">
+                  <i class="fab fa-google"></i>
+                  Google
+                </button>
+                <button class="social-btn microsoft">
+                  <i class="fab fa-microsoft"></i>
+                  Microsoft
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Attach form handlers
+        this.attachModalFormHandlers();
+      }
+
+      // Switch to requested mode
+      this.switchAuthTab(mode);
+
+      // Show modal
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    },
+
+    // Close authentication modal
+    closeAuthModal: function() {
+      const modal = document.getElementById('auth-modal');
+      if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    },
+
+    // Switch between sign in and sign up tabs
+    switchAuthTab: function(tab) {
+      const tabs = document.querySelectorAll('.auth-tab');
+      const containers = document.querySelectorAll('.auth-form-container');
+
+      tabs.forEach(t => {
+        if (t.dataset.tab === tab) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+
+      containers.forEach(c => {
+        if (c.id === tab + '-container') {
+          c.classList.add('active');
+        } else {
+          c.classList.remove('active');
+        }
+      });
+    },
+
+    // Attach form handlers for modal
+    attachModalFormHandlers: function() {
+      // Sign In Form
+      const signinForm = document.getElementById('modal-signin-form');
+      if (signinForm) {
+        signinForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          const email = document.getElementById('modal-signin-email').value;
+          const password = document.getElementById('modal-signin-password').value;
+
+          // Demo authentication
+          if (typeof DataManager !== 'undefined') {
+            const client = DataManager.clients.getByEmail(email);
+
+            if (client && client.password === password) {
+              // Client login
+              localStorage.setItem('authToken', 'client_token_' + Date.now());
+              localStorage.setItem('userEmail', email);
+              localStorage.setItem('userRole', 'client');
+              localStorage.setItem('userData', JSON.stringify({
+                clientId: client.id,
+                firstName: client.firstName,
+                lastName: client.lastName,
+                email: client.email,
+                company: client.company
+              }));
+
+              WaarheidAuth.closeAuthModal();
+              window.location.href = 'dashboard.html';
+              return;
+            }
+          }
+
+          // Fallback - accept any credentials
+          localStorage.setItem('authToken', 'demo_token_' + Date.now());
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', 'client');
+          localStorage.setItem('userData', JSON.stringify({
+            firstName: email.split('@')[0],
+            email: email
+          }));
+
+          WaarheidAuth.closeAuthModal();
+          window.location.href = 'dashboard.html';
+        });
+      }
+
+      // Sign Up Form
+      const signupForm = document.getElementById('modal-signup-form');
+      if (signupForm) {
+        signupForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          const firstName = document.getElementById('modal-signup-firstname').value.trim();
+          const lastName = document.getElementById('modal-signup-lastname').value.trim();
+          const company = document.getElementById('modal-signup-company').value.trim();
+          const email = document.getElementById('modal-signup-email').value.trim();
+          const password = document.getElementById('modal-signup-password').value;
+          const confirmPassword = document.getElementById('modal-signup-confirm').value;
+
+          if (password !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+          }
+
+          if (password.length < 8) {
+            alert('Password must be at least 8 characters');
+            return;
+          }
+
+          // Create client in data manager
+          if (typeof DataManager !== 'undefined') {
+            const client = DataManager.clients.create({
+              firstName,
+              lastName,
+              company,
+              email,
+              password: password
+            });
+
+            localStorage.setItem('userData', JSON.stringify({
+              clientId: client.id,
+              firstName,
+              lastName,
+              company,
+              email,
+              createdAt: new Date().toISOString()
+            }));
+          } else {
+            localStorage.setItem('userData', JSON.stringify({
+              firstName,
+              lastName,
+              company,
+              email,
+              createdAt: new Date().toISOString()
+            }));
+          }
+
+          localStorage.setItem('authToken', 'demo_token_' + Date.now());
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userRole', 'client');
+
+          WaarheidAuth.closeAuthModal();
+          window.location.href = 'dashboard.html';
+        });
+      }
+
+      // Social auth buttons (demo)
+      document.querySelectorAll('.social-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          alert('Social authentication is not available in demo mode.');
+        });
+      });
     },
 
     // Attach user menu event listeners
