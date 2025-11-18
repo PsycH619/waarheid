@@ -1506,21 +1506,25 @@ document.addEventListener('DOMContentLoaded', function() {
   // ============================================
   // Consultation Booking Modal
   // ============================================
+  let clientBookingCalendarDate = new Date();
+  let selectedTimeSlot = null;
+
   window.openConsultationModal = function() {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const availableSlots = DataManager.timeslots.getAvailable();
 
     const modal = document.createElement('div');
     modal.id = 'consultation-modal';
     modal.className = 'ticket-modal-overlay active';
     modal.innerHTML = `
-      <div class="ticket-modal-container" style="max-width: 600px;">
+      <div class="ticket-modal-container" style="max-width: 800px;">
         <div class="ticket-modal-header">
           <h2>Book a Consultation</h2>
           <button class="modal-close-btn" onclick="closeConsultationModal()">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="ticket-modal-body">
+        <div class="ticket-modal-body" style="max-height: 70vh; overflow-y: auto;">
           <form id="consultation-form" onsubmit="submitConsultation(event)">
             <div class="form-group">
               <label for="consultation-service">
@@ -1528,67 +1532,61 @@ document.addEventListener('DOMContentLoaded', function() {
               </label>
               <select id="consultation-service" required>
                 <option value="">Select a service...</option>
+                <option value="Website Development">Website Development</option>
+                <option value="Brand Identity">Brand Identity</option>
+                <option value="Digital Marketing">Digital Marketing</option>
                 <option value="SEO Optimization">SEO Optimization</option>
-                <option value="Social Media Marketing">Social Media Marketing</option>
-                <option value="Content Marketing">Content Marketing</option>
-                <option value="PPC Advertising">PPC Advertising</option>
-                <option value="Web Design">Web Design</option>
-                <option value="Branding Strategy">Branding Strategy</option>
-                <option value="New Project Idea">New Project Idea</option>
-                <option value="General Consultation">General Consultation</option>
+                <option value="Social Media Management">Social Media Management</option>
+                <option value="Content Creation">Content Creation</option>
+                <option value="E-commerce Solutions">E-commerce Solutions</option>
+                <option value="Consulting">Consulting</option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="consultation-date">
-                <i class="fas fa-calendar"></i> Preferred Date *
-              </label>
-              <input type="date" id="consultation-date" required min="${new Date().toISOString().split('T')[0]}">
-            </div>
+            ${availableSlots.length === 0 ? `
+              <div style="padding: 2rem; text-align: center; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <h3 style="color: #ef4444; margin-bottom: 0.5rem;">No Time Slots Available</h3>
+                <p style="color: var(--dashboard-text-muted);">There are currently no available time slots. Please check back later or contact us directly.</p>
+              </div>
+            ` : `
+              <div class="form-group">
+                <label>
+                  <i class="fas fa-calendar"></i> Select Date & Time *
+                </label>
+                <div id="client-booking-calendar"></div>
+              </div>
 
-            <div class="form-group">
-              <label for="consultation-time">
-                <i class="fas fa-clock"></i> Preferred Time Slot *
-              </label>
-              <select id="consultation-time" required>
-                <option value="">Select time slot...</option>
-                <option value="09:00 - 10:00">09:00 - 10:00 (Morning)</option>
-                <option value="10:00 - 11:00">10:00 - 11:00 (Morning)</option>
-                <option value="11:00 - 12:00">11:00 - 12:00 (Late Morning)</option>
-                <option value="13:00 - 14:00">13:00 - 14:00 (Afternoon)</option>
-                <option value="14:00 - 15:00">14:00 - 15:00 (Afternoon)</option>
-                <option value="15:00 - 16:00">15:00 - 16:00 (Afternoon)</option>
-                <option value="16:00 - 17:00">16:00 - 17:00 (Late Afternoon)</option>
-              </select>
-            </div>
+              <input type="hidden" id="selected-slot-id" required>
 
-            <div class="form-group">
-              <label for="consultation-phone">
-                <i class="fas fa-phone"></i> Phone Number
-              </label>
-              <input type="tel" id="consultation-phone" placeholder="Your contact number">
-            </div>
+              <div class="form-group">
+                <label for="consultation-phone">
+                  <i class="fas fa-phone"></i> Phone Number
+                </label>
+                <input type="tel" id="consultation-phone" placeholder="Your contact number">
+              </div>
 
-            <div class="form-group">
-              <label for="consultation-message">
-                <i class="fas fa-comment"></i> Description *
-              </label>
-              <textarea
-                id="consultation-message"
-                rows="6"
-                placeholder="Please describe your project idea, goals, or what you'd like to discuss during the consultation..."
-                required
-              ></textarea>
-            </div>
+              <div class="form-group">
+                <label for="consultation-message">
+                  <i class="fas fa-comment"></i> Description *
+                </label>
+                <textarea
+                  id="consultation-message"
+                  rows="4"
+                  placeholder="Please describe your project idea, goals, or what you'd like to discuss during the consultation..."
+                  required
+                ></textarea>
+              </div>
 
-            <div class="ticket-modal-actions">
-              <button type="button" class="btn-secondary" onclick="closeConsultationModal()">
-                Cancel
-              </button>
-              <button type="submit" class="btn-primary">
-                <i class="fas fa-calendar-check"></i> Book Consultation
-              </button>
-            </div>
+              <div class="ticket-modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeConsultationModal()">
+                  Cancel
+                </button>
+                <button type="submit" class="btn-primary">
+                  <i class="fas fa-calendar-check"></i> Book Consultation
+                </button>
+              </div>
+            `}
           </form>
         </div>
       </div>
@@ -1596,6 +1594,249 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
+
+    if (availableSlots.length > 0) {
+      renderClientBookingCalendar(clientBookingCalendarDate);
+    }
+  };
+
+  function renderClientBookingCalendar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const prevLastDay = new Date(year, month, 0);
+    const firstDayOfWeek = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+    const prevMonthDays = prevLastDay.getDate();
+
+    const availableSlots = DataManager.timeslots.getAvailable();
+    const slotsByDate = {};
+
+    availableSlots.forEach(slot => {
+      if (!slotsByDate[slot.date]) {
+        slotsByDate[slot.date] = [];
+      }
+      slotsByDate[slot.date].push(slot);
+    });
+
+    let calendarHTML = `
+      <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--dashboard-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <button type="button" class="btn-secondary" onclick="previousBookingMonth()" style="padding: 0.5rem 1rem;">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h3 style="margin: 0;">${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
+          <button type="button" class="btn-secondary" onclick="nextBookingMonth()" style="padding: 0.5rem 1rem;">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.3rem; margin-bottom: 0.5rem;">
+          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day =>
+            `<div style="text-align: center; font-weight: 700; padding: 0.3rem; font-size: 0.85rem; color: var(--dashboard-text-muted);">${day}</div>`
+          ).join('')}
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.3rem;">
+    `;
+
+    // Previous month days
+    const startDay = firstDayOfWeek === 0 ? 0 : firstDayOfWeek;
+    for (let i = startDay - 1; i >= 0; i--) {
+      const day = prevMonthDays - i;
+      calendarHTML += `
+        <div style="padding: 0.75rem; text-align: center; opacity: 0.3; background: rgba(255,255,255,0.02); border-radius: 6px; min-height: 50px;">
+          <div style="font-size: 0.9rem;">${day}</div>
+        </div>
+      `;
+    }
+
+    // Current month days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= totalDays; day++) {
+      const currentDate = new Date(year, month, day);
+      currentDate.setHours(0, 0, 0, 0);
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const daySlots = slotsByDate[dateStr] || [];
+      const isPast = currentDate < today;
+      const isToday = currentDate.getTime() === today.getTime();
+      const hasSlots = daySlots.length > 0;
+
+      calendarHTML += `
+        <div onclick="${hasSlots && !isPast ? `showAvailableSlots('${dateStr}')` : ''}" style="
+          padding: 0.5rem;
+          background: ${isToday ? 'rgba(197, 0, 119, 0.2)' : 'rgba(255,255,255,0.05)'};
+          border: ${isToday ? '2px solid var(--dashboard-primary)' : '1px solid var(--dashboard-border)'};
+          border-radius: 6px;
+          cursor: ${hasSlots && !isPast ? 'pointer' : 'default'};
+          transition: all 0.2s;
+          opacity: ${isPast ? '0.4' : hasSlots ? '1' : '0.6'};
+          min-height: 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        " ${hasSlots && !isPast ? `onmouseover="this.style.background='rgba(197, 0, 119, 0.3)'" onmouseout="this.style.background='${isToday ? 'rgba(197, 0, 119, 0.2)' : 'rgba(255,255,255,0.05)'}'"` : ''}>
+          <div style="font-weight: ${isToday ? '700' : '500'}; font-size: 0.95rem;">
+            ${day}
+          </div>
+          ${hasSlots ? `
+            <div style="margin-top: 0.2rem; font-size: 0.65rem; color: #10b981;">
+              ${daySlots.length} slot${daySlots.length > 1 ? 's' : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // Next month days
+    const remainingCells = 42 - (startDay + totalDays);
+    for (let i = 1; i <= remainingCells; i++) {
+      calendarHTML += `
+        <div style="padding: 0.75rem; text-align: center; opacity: 0.3; background: rgba(255,255,255,0.02); border-radius: 6px; min-height: 50px;">
+          <div style="font-size: 0.9rem;">${i}</div>
+        </div>
+      `;
+    }
+
+    calendarHTML += `
+        </div>
+        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border: 1px solid #10b981;">
+          <p style="margin: 0; font-size: 0.85rem; color: #10b981; text-align: center;">
+            <i class="fas fa-info-circle"></i> Click on a date with available slots to select your time
+          </p>
+        </div>
+      </div>
+    `;
+
+    const container = document.getElementById('client-booking-calendar');
+    if (container) {
+      container.innerHTML = calendarHTML;
+    }
+  }
+
+  window.previousBookingMonth = function() {
+    clientBookingCalendarDate.setMonth(clientBookingCalendarDate.getMonth() - 1);
+    renderClientBookingCalendar(clientBookingCalendarDate);
+  };
+
+  window.nextBookingMonth = function() {
+    clientBookingCalendarDate.setMonth(clientBookingCalendarDate.getMonth() + 1);
+    renderClientBookingCalendar(clientBookingCalendarDate);
+  };
+
+  window.showAvailableSlots = function(dateStr) {
+    const availableSlots = DataManager.timeslots.getAvailable();
+    const daySlots = availableSlots.filter(s => s.date === dateStr);
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    const existingSlotSelector = document.getElementById('slot-selector-panel');
+    if (existingSlotSelector) existingSlotSelector.remove();
+
+    const panel = document.createElement('div');
+    panel.id = 'slot-selector-panel';
+    panel.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--dashboard-card);
+      border: 2px solid var(--dashboard-primary);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 10001;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    `;
+
+    panel.innerHTML = `
+      <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: var(--dashboard-primary);">
+        <i class="fas fa-calendar-day"></i> ${formattedDate}
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        ${daySlots.map(slot => `
+          <button type="button" onclick="selectTimeSlot('${slot.id}', '${dateStr}', '${slot.startTime}', '${slot.endTime}')" style="
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid ${selectedTimeSlot === slot.id ? 'var(--dashboard-primary)' : 'var(--dashboard-border)'};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-size: 1rem;
+            color: white;
+          " onmouseover="this.style.borderColor='var(--dashboard-primary)'" onmouseout="this.style.borderColor='${selectedTimeSlot === slot.id ? 'var(--dashboard-primary)' : 'var(--dashboard-border)'}'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <i class="fas fa-clock"></i> <strong>${slot.startTime} - ${slot.endTime}</strong>
+              </div>
+              ${selectedTimeSlot === slot.id ? '<i class="fas fa-check-circle" style="color: var(--dashboard-primary);"></i>' : ''}
+            </div>
+          </button>
+        `).join('')}
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+        <button type="button" onclick="closeSlotSelector()" class="btn-secondary" style="flex: 1;">
+          Cancel
+        </button>
+        <button type="button" onclick="confirmSlotSelection()" class="btn-primary" style="flex: 1;" ${!selectedTimeSlot ? 'disabled' : ''}>
+          <i class="fas fa-check"></i> Confirm
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+  };
+
+  window.selectTimeSlot = function(slotId, date, startTime, endTime) {
+    selectedTimeSlot = slotId;
+    document.getElementById('selected-slot-id').value = slotId;
+
+    // Update all slot buttons
+    const slotButtons = document.querySelectorAll('#slot-selector-panel button[type="button"]');
+    slotButtons.forEach(btn => {
+      if (btn.onclick && btn.onclick.toString().includes(slotId)) {
+        btn.style.borderColor = 'var(--dashboard-primary)';
+        if (!btn.querySelector('.fa-check-circle')) {
+          btn.querySelector('div').innerHTML += '<i class="fas fa-check-circle" style="color: var(--dashboard-primary);"></i>';
+        }
+      } else if (btn.onclick && btn.onclick.toString().includes('selectTimeSlot')) {
+        btn.style.borderColor = 'var(--dashboard-border)';
+        const checkIcon = btn.querySelector('.fa-check-circle');
+        if (checkIcon) checkIcon.remove();
+      }
+    });
+
+    // Enable confirm button
+    const confirmBtn = document.querySelector('#slot-selector-panel button.btn-primary');
+    if (confirmBtn) confirmBtn.disabled = false;
+  };
+
+  window.confirmSlotSelection = function() {
+    closeSlotSelector();
+    // Visual feedback
+    const calendarContainer = document.getElementById('client-booking-calendar');
+    if (calendarContainer) {
+      const slot = DataManager.timeslots.getAll().find(s => s.id === selectedTimeSlot);
+      if (slot) {
+        const successMsg = document.createElement('div');
+        successMsg.style.cssText = 'padding: 1rem; background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; border-radius: 8px; margin-bottom: 1rem; text-align: center;';
+        successMsg.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Selected: ${new Date(slot.date).toLocaleDateString()} at ${slot.startTime} - ${slot.endTime}`;
+        calendarContainer.parentElement.insertBefore(successMsg, calendarContainer);
+      }
+    }
+  };
+
+  window.closeSlotSelector = function() {
+    const panel = document.getElementById('slot-selector-panel');
+    if (panel) panel.remove();
   };
 
   window.closeConsultationModal = function() {
@@ -1611,13 +1852,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const service = document.getElementById('consultation-service').value;
-    const date = document.getElementById('consultation-date').value;
-    const time = document.getElementById('consultation-time').value;
+    const slotIdInput = document.getElementById('selected-slot-id');
+    const slotId = slotIdInput ? slotIdInput.value : null;
     const phone = document.getElementById('consultation-phone').value;
     const message = document.getElementById('consultation-message').value;
 
-    if (!service || !date || !time || !message) {
+    if (!service || !message) {
       alert('Please fill in all required fields');
+      return;
+    }
+
+    if (!slotId) {
+      alert('Please select a time slot from the calendar');
+      return;
+    }
+
+    // Get the selected slot details
+    const slot = DataManager.timeslots.getAll().find(s => s.id === slotId);
+    if (!slot || !slot.available) {
+      alert('Selected time slot is no longer available. Please choose another slot.');
+      closeConsultationModal();
+      setTimeout(() => openConsultationModal(), 300);
       return;
     }
 
@@ -1627,14 +1882,21 @@ document.addEventListener('DOMContentLoaded', function() {
       email: userData.email || '',
       phone: phone,
       service: service,
-      preferredDate: date,
-      preferredTime: time,
+      preferredDate: slot.date,
+      preferredTime: slot.startTime,
       message: message,
-      status: 'pending'
+      status: 'pending',
+      timeSlotId: slotId
     });
 
+    // Book the time slot
+    DataManager.timeslots.book(slotId, consultation.id, clientId);
+
+    // Reset selection
+    selectedTimeSlot = null;
+
     closeConsultationModal();
-    alert('Consultation booked successfully! We will contact you to confirm the appointment.');
+    alert('Consultation booked successfully! We will review your request and contact you soon.');
     loadScheduleSection();
   };
 

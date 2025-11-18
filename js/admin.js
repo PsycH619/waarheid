@@ -303,6 +303,9 @@ document.addEventListener('DOMContentLoaded', function() {
                       <button class="btn-icon" onclick="viewConsultation('${c.id}')" title="View Details">
                         <i class="fas fa-eye"></i>
                       </button>
+                      <button class="btn-icon" onclick="editConsultation('${c.id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
                       ${c.status === 'pending' ? `
                         <button class="btn-icon success" onclick="approveConsultation('${c.id}')" title="Approve">
                           <i class="fas fa-check"></i>
@@ -314,6 +317,9 @@ document.addEventListener('DOMContentLoaded', function() {
                           <i class="fas fa-briefcase"></i>
                         </button>
                       ` : ''}
+                      <button class="btn-icon danger" onclick="deleteConsultation('${c.id}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -408,6 +414,117 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   };
 
+  window.editConsultation = function(consultationId) {
+    const consultation = DataManager.consultations.getById(consultationId);
+    if (!consultation) return;
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3>Edit Consultation</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="edit-consultation-form" onsubmit="submitEditConsultation(event, '${consultationId}')">
+          <div style="display: grid; gap: 1rem;">
+            <div class="form-group">
+              <label for="edit-name">Name</label>
+              <input type="text" id="edit-name" value="${consultation.name || ''}" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-email">Email</label>
+              <input type="email" id="edit-email" value="${consultation.email || ''}" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-phone">Phone</label>
+              <input type="tel" id="edit-phone" value="${consultation.phone || ''}">
+            </div>
+            <div class="form-group">
+              <label for="edit-service">Service</label>
+              <select id="edit-service">
+                <option value="Website Development" ${consultation.service === 'Website Development' ? 'selected' : ''}>Website Development</option>
+                <option value="Brand Identity" ${consultation.service === 'Brand Identity' ? 'selected' : ''}>Brand Identity</option>
+                <option value="Digital Marketing" ${consultation.service === 'Digital Marketing' ? 'selected' : ''}>Digital Marketing</option>
+                <option value="SEO Optimization" ${consultation.service === 'SEO Optimization' ? 'selected' : ''}>SEO Optimization</option>
+                <option value="Social Media Management" ${consultation.service === 'Social Media Management' ? 'selected' : ''}>Social Media Management</option>
+                <option value="Content Creation" ${consultation.service === 'Content Creation' ? 'selected' : ''}>Content Creation</option>
+                <option value="E-commerce Solutions" ${consultation.service === 'E-commerce Solutions' ? 'selected' : ''}>E-commerce Solutions</option>
+                <option value="Consulting" ${consultation.service === 'Consulting' ? 'selected' : ''}>Consulting</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-date">Preferred Date</label>
+              <input type="date" id="edit-date" value="${consultation.preferredDate || ''}">
+            </div>
+            <div class="form-group">
+              <label for="edit-time">Preferred Time</label>
+              <input type="time" id="edit-time" value="${consultation.preferredTime || ''}">
+            </div>
+            <div class="form-group">
+              <label for="edit-status">Status</label>
+              <select id="edit-status">
+                <option value="pending" ${consultation.status === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="approved" ${consultation.status === 'approved' ? 'selected' : ''}>Approved</option>
+                <option value="rejected" ${consultation.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                <option value="cancelled" ${consultation.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                <option value="completed" ${consultation.status === 'completed' ? 'selected' : ''}>Completed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-message">Message</label>
+              <textarea id="edit-message" rows="4">${consultation.message || ''}</textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-admin" onclick="document.getElementById('edit-consultation-form').requestSubmit()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    `);
+  };
+
+  window.submitEditConsultation = function(event, consultationId) {
+    event.preventDefault();
+
+    const updatedData = {
+      name: document.getElementById('edit-name').value,
+      email: document.getElementById('edit-email').value,
+      phone: document.getElementById('edit-phone').value,
+      service: document.getElementById('edit-service').value,
+      preferredDate: document.getElementById('edit-date').value,
+      preferredTime: document.getElementById('edit-time').value,
+      status: document.getElementById('edit-status').value,
+      message: document.getElementById('edit-message').value
+    };
+
+    DataManager.consultations.update(consultationId, updatedData);
+    closeModal();
+    refreshConsultations();
+    alert('Consultation updated successfully!');
+  };
+
+  window.deleteConsultation = function(consultationId) {
+    const consultation = DataManager.consultations.getById(consultationId);
+    if (!consultation) return;
+
+    if (!confirm(`Are you sure you want to delete the consultation for ${consultation.name}?`)) {
+      return;
+    }
+
+    // Release time slot if booked
+    if (consultation.timeSlotId) {
+      DataManager.timeslots.release(consultation.timeSlotId);
+    }
+
+    DataManager.consultations.delete(consultationId);
+    refreshConsultations();
+    alert('Consultation deleted successfully!');
+  };
+
   window.refreshConsultations = function() {
     loadConsultations();
   };
@@ -415,18 +532,306 @@ document.addEventListener('DOMContentLoaded', function() {
   // ============================================
   // Time Slots Section
   // ============================================
+  let currentCalendarDate = new Date();
+
   function loadTimeSlots() {
+    const slots = DataManager.timeslots.getAll();
+
+    mainContent.innerHTML = `
+      <div class="admin-action-bar">
+        <h1>Time Slots Calendar</h1>
+        <div class="admin-actions">
+          <button class="btn-admin secondary" onclick="showCreateTimeSlotsModal()">
+            <i class="fas fa-plus"></i>
+            Bulk Create
+          </button>
+          <button class="btn-admin" onclick="switchToListView()">
+            <i class="fas fa-list"></i>
+            List View
+          </button>
+        </div>
+      </div>
+      <div id="calendar-container"></div>
+    `;
+
+    renderCalendar(currentCalendarDate);
+  }
+
+  function renderCalendar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const prevLastDay = new Date(year, month, 0);
+    const firstDayOfWeek = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+    const prevMonthDays = prevLastDay.getDate();
+
+    const slots = DataManager.timeslots.getAll();
+    const slotsByDate = {};
+
+    slots.forEach(slot => {
+      if (!slotsByDate[slot.date]) {
+        slotsByDate[slot.date] = { available: 0, booked: 0 };
+      }
+      if (slot.available) {
+        slotsByDate[slot.date].available++;
+      } else {
+        slotsByDate[slot.date].booked++;
+      }
+    });
+
+    let calendarHTML = `
+      <div style="background: var(--dashboard-card); padding: 2rem; border-radius: 12px; margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <button class="btn-admin secondary" onclick="previousMonth()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h2 style="margin: 0;">${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+          <button class="btn-admin secondary" onclick="nextMonth()">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day =>
+            `<div style="text-align: center; font-weight: 700; padding: 0.5rem; color: var(--dashboard-text-muted);">${day}</div>`
+          ).join('')}
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
+    `;
+
+    // Previous month days
+    const startDay = firstDayOfWeek === 0 ? 0 : firstDayOfWeek;
+    for (let i = startDay - 1; i >= 0; i--) {
+      const day = prevMonthDays - i;
+      calendarHTML += `
+        <div style="padding: 1rem; text-align: center; opacity: 0.3; background: rgba(255,255,255,0.02); border-radius: 8px; min-height: 80px;">
+          <div>${day}</div>
+        </div>
+      `;
+    }
+
+    // Current month days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let day = 1; day <= totalDays; day++) {
+      const currentDate = new Date(year, month, day);
+      currentDate.setHours(0, 0, 0, 0);
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const daySlots = slotsByDate[dateStr] || { available: 0, booked: 0 };
+      const isPast = currentDate < today;
+      const isToday = currentDate.getTime() === today.getTime();
+
+      const totalSlots = daySlots.available + daySlots.booked;
+
+      calendarHTML += `
+        <div onclick="showDaySlots('${dateStr}')" style="
+          padding: 0.75rem;
+          background: ${isToday ? 'rgba(197, 0, 119, 0.2)' : 'rgba(255,255,255,0.05)'};
+          border: ${isToday ? '2px solid var(--dashboard-primary)' : '1px solid var(--dashboard-border)'};
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+          opacity: ${isPast ? '0.5' : '1'};
+          min-height: 80px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        " onmouseover="this.style.background='rgba(197, 0, 119, 0.15)'" onmouseout="this.style.background='${isToday ? 'rgba(197, 0, 119, 0.2)' : 'rgba(255,255,255,0.05)'}'">
+          <div style="font-weight: ${isToday ? '700' : '500'}; font-size: 1.1rem; text-align: center;">
+            ${day}
+          </div>
+          ${totalSlots > 0 ? `
+            <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+              ${daySlots.available > 0 ? `<div style="color: #10b981;">${daySlots.available} available</div>` : ''}
+              ${daySlots.booked > 0 ? `<div style="color: #ef4444;">${daySlots.booked} booked</div>` : ''}
+            </div>
+          ` : `
+            <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--dashboard-text-muted); text-align: center;">
+              ${!isPast ? 'Click to add' : ''}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // Next month days
+    const remainingCells = 42 - (startDay + totalDays);
+    for (let i = 1; i <= remainingCells; i++) {
+      calendarHTML += `
+        <div style="padding: 1rem; text-align: center; opacity: 0.3; background: rgba(255,255,255,0.02); border-radius: 8px; min-height: 80px;">
+          <div>${i}</div>
+        </div>
+      `;
+    }
+
+    calendarHTML += `
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+          <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button class="btn-admin" onclick="showQuickAddSlot()">
+              <i class="fas fa-plus-circle"></i> Quick Add Slot
+            </button>
+            <button class="btn-admin secondary" onclick="showCreateTimeSlotsModal()">
+              <i class="fas fa-calendar-plus"></i> Bulk Create Slots
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.getElementById('calendar-container');
+    if (container) {
+      container.innerHTML = calendarHTML;
+    }
+  }
+
+  window.previousMonth = function() {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+    renderCalendar(currentCalendarDate);
+  };
+
+  window.nextMonth = function() {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+    renderCalendar(currentCalendarDate);
+  };
+
+  window.showDaySlots = function(dateStr) {
+    const slots = DataManager.timeslots.getAll().filter(s => s.date === dateStr);
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    const slotsList = slots.length > 0 ? slots.map(slot => {
+      const client = slot.bookedBy ? DataManager.clients.getById(slot.bookedBy) : null;
+      return `
+        <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid ${slot.available ? '#10b981' : '#ef4444'};">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>${slot.startTime} - ${slot.endTime}</strong>
+              <div style="margin-top: 0.3rem;">
+                ${slot.available ?
+                  '<span style="color: #10b981; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> Available</span>' :
+                  `<span style="color: #ef4444; font-size: 0.9rem;"><i class="fas fa-user"></i> Booked by ${client ? client.firstName + ' ' + client.lastName : 'Unknown'}</span>`
+                }
+              </div>
+            </div>
+            <div class="table-actions">
+              ${!slot.available && slot.consultationId ? `
+                <button class="btn-icon" onclick="viewConsultation('${slot.consultationId}'); closeModal();" title="View">
+                  <i class="fas fa-eye"></i>
+                </button>
+              ` : ''}
+              ${slot.available ? `
+                <button class="btn-icon danger" onclick="deleteTimeSlot('${slot.id}'); closeModal(); renderCalendar(currentCalendarDate);" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('') : '<p style="text-align: center; color: var(--dashboard-text-muted);">No time slots for this day</p>';
+
+    showModal(`
+      <div class="admin-modal-header">
+        <h3>${formattedDate}</h3>
+        <button class="admin-modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body" style="max-height: 60vh; overflow-y: auto;">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          ${slotsList}
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-admin secondary" onclick="closeModal()">Close</button>
+        <button class="btn-admin" onclick="showQuickAddSlotForDate('${dateStr}')">
+          <i class="fas fa-plus"></i> Add Slot
+        </button>
+      </div>
+    `);
+  };
+
+  window.showQuickAddSlot = function() {
+    const today = new Date().toISOString().split('T')[0];
+    showQuickAddSlotForDate(today);
+  };
+
+  window.showQuickAddSlotForDate = function(dateStr) {
+    closeModal();
+    setTimeout(() => {
+      showModal(`
+        <div class="admin-modal-header">
+          <h3>Add Time Slot</h3>
+          <button class="admin-modal-close" onclick="closeModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="quick-add-slot-form">
+            <div class="admin-form-group">
+              <label>Date *</label>
+              <input type="date" name="date" value="${dateStr}" required min="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="admin-form-row">
+              <div class="admin-form-group">
+                <label>Start Time *</label>
+                <input type="time" name="startTime" value="09:00" required>
+              </div>
+              <div class="admin-form-group">
+                <label>End Time *</label>
+                <input type="time" name="endTime" value="10:00" required>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button class="btn-admin secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-admin" onclick="submitQuickAddSlot()">
+            <i class="fas fa-plus"></i> Add Slot
+          </button>
+        </div>
+      `);
+    }, 100);
+  };
+
+  window.submitQuickAddSlot = function() {
+    const form = document.getElementById('quick-add-slot-form');
+    const formData = new FormData(form);
+
+    DataManager.timeslots.create({
+      date: formData.get('date'),
+      startTime: formData.get('startTime'),
+      endTime: formData.get('endTime')
+    });
+
+    closeModal();
+    alert('Time slot created successfully!');
+    renderCalendar(currentCalendarDate);
+  };
+
+  window.switchToListView = function() {
     const slots = DataManager.timeslots.getAll().sort((a, b) =>
       new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime)
     );
 
     mainContent.innerHTML = `
       <div class="admin-action-bar">
-        <h1>Available Time Slots</h1>
+        <h1>Time Slots List</h1>
         <div class="admin-actions">
-          <button class="btn-admin" onclick="showCreateTimeSlotsModal()">
+          <button class="btn-admin secondary" onclick="showCreateTimeSlotsModal()">
             <i class="fas fa-plus"></i>
-            Create Time Slots
+            Bulk Create
+          </button>
+          <button class="btn-admin" onclick="loadTimeSlots()">
+            <i class="fas fa-calendar"></i>
+            Calendar View
           </button>
         </div>
       </div>
