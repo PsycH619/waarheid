@@ -82,8 +82,8 @@
                 <a href="dashboard.html"><i class="fas fa-th-large"></i> My Dashboard</a>
                 <div class="dropdown-divider"></div>
               `}
-              <a href="#"><i class="fas fa-user-circle"></i> My Profile</a>
-              <a href="#"><i class="fas fa-cog"></i> Settings</a>
+              <a href="#" class="profile-link-header"><i class="fas fa-user-circle"></i> My Profile</a>
+              <a href="#" class="settings-link-header"><i class="fas fa-cog"></i> Settings</a>
               <div class="dropdown-divider"></div>
               <a href="#" class="logout-btn-header"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
             </div>
@@ -439,6 +439,8 @@
       const userMenuToggle = document.querySelector('.user-menu-toggle-header');
       const userMenu = document.querySelector('.user-menu-header');
       const logoutBtn = document.querySelector('.logout-btn-header');
+      const profileLink = document.querySelector('.profile-link-header');
+      const settingsLink = document.querySelector('.settings-link-header');
 
       if (userMenuToggle && userMenu) {
         userMenuToggle.addEventListener('click', function(e) {
@@ -451,6 +453,26 @@
           if (!userMenu.contains(e.target)) {
             userMenu.classList.remove('active');
           }
+        });
+      }
+
+      if (profileLink) {
+        profileLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Store the section to navigate to
+          localStorage.setItem('dashboardSection', 'profile');
+          // Redirect to dashboard
+          window.location.href = WaarheidAuth.isAdmin() ? 'admin-dashboard.html' : 'dashboard.html';
+        });
+      }
+
+      if (settingsLink) {
+        settingsLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Store the section to navigate to
+          localStorage.setItem('dashboardSection', 'settings');
+          // Redirect to dashboard
+          window.location.href = WaarheidAuth.isAdmin() ? 'admin-dashboard.html' : 'dashboard.html';
         });
       }
 

@@ -55,39 +55,21 @@
    ============================================ */
 .category-cards {
   display: flex;
-  gap: 2.5rem;
+  gap: 2rem;
   margin-top: 3rem;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding: 2rem calc((100vw - 380px) / 2) 3rem;
+  padding: 2rem 0 3rem 0;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding-left: calc(50vw - 50%);
+  padding-right: calc(50vw - 50%);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   cursor: grab;
   user-select: none;
   scroll-snap-type: x mandatory;
   position: relative;
-}
-
-.category-cards::before,
-.category-cards::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100px;
-  pointer-events: none;
-  z-index: 2;
-  transition: opacity 0.3s ease;
-}
-
-.category-cards::before {
-  left: 0;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
-}
-
-.category-cards::after {
-  right: 0;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
 }
 
 .category-cards:active {
@@ -117,7 +99,6 @@
   opacity: 0.5;
   transform: scale(0.92) translateY(10px);
   will-change: transform, opacity;
-  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .category-card::before {
@@ -140,8 +121,7 @@
 .category-card.active {
   opacity: 1;
   transform: scale(1) translateY(0);
-  box-shadow: 0 20px 60px rgba(197, 0, 119, 0.25),
-              0 0 0 1px rgba(197, 0, 119, 0.1);
+  box-shadow: 0 20px 60px rgba(197, 0, 119, 0.25);
 }
 
 .category-card:hover {

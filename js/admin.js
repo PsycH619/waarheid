@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Check if we need to navigate to a specific section
+  const targetSection = localStorage.getItem('dashboardSection');
+  if (targetSection) {
+    localStorage.removeItem('dashboardSection');
+    // Use setTimeout to ensure DOM is fully loaded
+    setTimeout(() => {
+      navigateToSection(targetSection);
+    }, 100);
+  }
+
   function navigateToSection(section) {
     // Update active nav
     navLinks.forEach(l => l.classList.remove('active'));

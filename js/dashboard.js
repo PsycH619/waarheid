@@ -31,6 +31,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   loadClientDashboard();
 
+  // Check if we need to navigate to a specific section
+  const targetSection = localStorage.getItem('dashboardSection');
+  if (targetSection) {
+    localStorage.removeItem('dashboardSection');
+    // Use setTimeout to ensure DOM is fully loaded
+    setTimeout(() => {
+      navigateToSection(targetSection);
+    }, 100);
+  }
+
   // ============================================
   // Section Navigation
   // ============================================
@@ -3173,7 +3183,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <h2 style="margin: 0 0 1.5rem 0;"><i class="fas fa-palette"></i> Appearance</h2>
 
           <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label>Theme</label>
+            <label style="color: white;">Theme</label>
             <select id="client-theme-select" onchange="changeClientTheme(this.value)">
               <option value="dark">Dark Mode</option>
               <option value="light">Light Mode</option>
@@ -3182,7 +3192,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
 
           <div class="form-group">
-            <label>Language</label>
+            <label style="color: white;">Language</label>
             <select id="client-language-select" onchange="changeClientLanguage(this.value)">
               <option value="en">English</option>
               <option value="nl">Nederlands</option>
