@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================
-  // Drag to Scroll for Cards
+  // Drag to Scroll for Cards (with click detection)
   // ============================================
   function initDragScroll(container) {
     if (!container) return;
@@ -441,19 +441,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let isDown = false;
     let startX;
     let scrollLeft;
+    let hasMoved = false;
 
     container.addEventListener('mousedown', (e) => {
       isDown = true;
+      hasMoved = false;
       startX = e.pageX - container.offsetLeft;
       scrollLeft = container.scrollLeft;
+      container.style.cursor = 'grabbing';
     });
 
     container.addEventListener('mouseleave', () => {
       isDown = false;
+      container.style.cursor = 'grab';
     });
 
     container.addEventListener('mouseup', () => {
       isDown = false;
+      container.style.cursor = 'grab';
     });
 
     container.addEventListener('mousemove', (e) => {
@@ -461,13 +466,132 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       const x = e.pageX - container.offsetLeft;
       const walk = (x - startX) * 2;
+
+      // If moved more than 5px, it's a drag not a click
+      if (Math.abs(walk) > 5) {
+        hasMoved = true;
+      }
+
       container.scrollLeft = scrollLeft - walk;
     });
+
+    // Prevent clicks when dragging
+    container.addEventListener('click', (e) => {
+      if (hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  }
+
+  // ============================================
+  // Navigation Arrows for Card Containers
+  // ============================================
+  function initCardNavigation(wrapper) {
+    if (!wrapper) return;
+
+    const container = wrapper.querySelector('.category-cards') || wrapper.querySelector('.portfolio-grid');
+    if (!container) return;
+
+    // Create navigation arrows
+    const prevArrow = document.createElement('button');
+    prevArrow.className = 'cards-nav-arrow prev';
+    prevArrow.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevArrow.setAttribute('aria-label', 'Previous card');
+
+    const nextArrow = document.createElement('button');
+    nextArrow.className = 'cards-nav-arrow next';
+    nextArrow.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextArrow.setAttribute('aria-label', 'Next card');
+
+    wrapper.appendChild(prevArrow);
+    wrapper.appendChild(nextArrow);
+
+    // Get all cards
+    const cards = container.querySelectorAll('.category-card, .portfolio-card');
+    let currentIndex = 0;
+
+    // Update arrow states
+    function updateArrows() {
+      prevArrow.disabled = currentIndex === 0;
+      nextArrow.disabled = currentIndex === cards.length - 1;
+    }
+
+    // Scroll to card
+    function scrollToCard(index) {
+      if (index < 0 || index >= cards.length) return;
+
+      currentIndex = index;
+      const card = cards[index];
+      const containerRect = container.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const scrollOffset = cardRect.left - containerRect.left + container.scrollLeft;
+      const centerOffset = (containerRect.width - cardRect.width) / 2;
+
+      container.scrollTo({
+        left: scrollOffset - centerOffset,
+        behavior: 'smooth'
+      });
+
+      // Update active state
+      cards.forEach((c, i) => {
+        c.classList.toggle('active', i === index);
+      });
+
+      updateArrows();
+    }
+
+    // Arrow click handlers
+    prevArrow.addEventListener('click', () => {
+      scrollToCard(currentIndex - 1);
+    });
+
+    nextArrow.addEventListener('click', () => {
+      scrollToCard(currentIndex + 1);
+    });
+
+    // Update current index on scroll
+    let scrollTimeout;
+    container.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const containerRect = container.getBoundingClientRect();
+        const containerCenter = containerRect.left + containerRect.width / 2;
+
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+
+        cards.forEach((card, i) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenter = cardRect.left + cardRect.width / 2;
+          const distance = Math.abs(cardCenter - containerCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = i;
+          }
+        });
+
+        if (closestIndex !== currentIndex) {
+          currentIndex = closestIndex;
+          cards.forEach((c, i) => {
+            c.classList.toggle('active', i === closestIndex);
+          });
+          updateArrows();
+        }
+      }, 100);
+    });
+
+    // Initialize
+    updateArrows();
   }
 
   // Initialize drag scroll for category and portfolio cards
   initDragScroll(document.querySelector('.category-cards'));
   initDragScroll(document.querySelector('.portfolio-grid'));
+
+  // Initialize card navigation arrows
+  initCardNavigation(document.querySelector('.category-cards-wrapper'));
 
   // ============================================
   // Navigation Dots for Cards
