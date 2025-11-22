@@ -92,7 +92,7 @@ If you need specific account details or want to make changes, politely ask the u
 
       // Initialize Gemini model
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-1.5-flash-latest',
         systemInstruction,
       });
 
@@ -112,7 +112,7 @@ If you need specific account details or want to make changes, politely ask the u
         userMessage: message,
         aiResponse,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        model: 'gemini-1.5-flash',
+        model: 'gemini-1.5-flash-latest',
       });
 
       return {
