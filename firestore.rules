@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'admin';
+    }
+
+    function isClient() {
+      return isAuthenticated() && getUserData().role == 'client';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Only admins can create user documents (besides auth triggers)
+      allow create: if isAdmin();
+
+      // Users can update their own data, admins can update all
+      allow update: if isOwner(userId) || isAdmin();
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Projects collection
+    match /projects/{projectId} {
+      // Clients can read their own projects, admins can read all
+      allow read: if isAdmin() ||
+                     (isClient() && resource.data.clientId == request.auth.uid);
+
+      // Only admins can create projects
+      allow create: if isAdmin();
+
+      // Only admins can update projects
+      allow update: if isAdmin();
+
+      // Only admins can delete projects
+      allow delete: if isAdmin();
+    }
+
+    // Project Activities collection
+    match /projectActivities/{activityId} {
+      // Read if user is admin or owns the related project
+      allow read: if isAdmin() ||
+                     (isClient() &&
+                      get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.clientId == request.auth.uid);
+
+      // Both clients and admins can create activities
+      allow create: if isAuthenticated();
+
+      // Only admins can update/delete activities
+      allow update, delete: if isAdmin();
+    }
+
+    // Conversations collection
+    match /conversations/{conversationId} {
+      // Clients can read their own conversations, admins can read all
+      allow read: if isAdmin() ||
+                     (isClient() && resource.data.clientId == request.auth.uid);
+
+      // Clients can create their own conversations
+      allow create: if isClient() && request.resource.data.clientId == request.auth.uid;
+
+      // Both clients and admins can update conversations
+      allow update: if isAdmin() ||
+                       (isClient() && resource.data.clientId == request.auth.uid);
+
+      // Only admins can delete conversations
+      allow delete: if isAdmin();
+    }
+
+    // Messages collection
+    match /messages/{messageId} {
+      // Users can read messages from their conversations, admins can read all
+      allow read: if isAdmin() ||
+                     (isClient() &&
+                      get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.clientId == request.auth.uid);
+
+      // Users can create messages in their conversations
+      allow create: if isAuthenticated() &&
+                       (isAdmin() ||
+                        (isClient() &&
+                         get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.clientId == request.auth.uid));
+
+      // Only admins can update/delete messages
+      allow update, delete: if isAdmin();
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      // Clients can read their own appointments, admins can read all
+      allow read: if isAdmin() ||
+                     (isClient() && resource.data.clientId == request.auth.uid);
+
+      // Clients can create their own appointments
+      allow create: if isClient() && request.resource.data.clientId == request.auth.uid;
+
+      // Admins can update all, clients can update their own
+      allow update: if isAdmin() ||
+                       (isClient() && resource.data.clientId == request.auth.uid);
+
+      // Only admins can delete appointments
+      allow delete: if isAdmin();
+    }
+
+    // Contact submissions collection
+    match /contactSubmissions/{submissionId} {
+      // Anyone can create (for public contact form)
+      allow create: if true;
+
+      // Only admins can read, update, or delete
+      allow read, update, delete: if isAdmin();
+    }
+
+    // AI Conversations collection (for logging)
+    match /aiConversations/{conversationId} {
+      // Only admins can read AI conversation logs
+      allow read: if isAdmin();
+
+      // System/functions can create
+      allow create: if true;
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+  }
+}

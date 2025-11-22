@@ -1,318 +1,323 @@
-# Waarheid Marketing - Website Rebuild
+# MarketPro - Modern Marketing Agency Platform
 
-Modern, clean HTML/CSS/JavaScript website for Waarheid Marketing - A Marketing & Digitalization Agency.
+A complete, production-ready web application for a marketing agency built with Next.js and Firebase.
 
-## Overview
+## 🚀 Features
 
-This is a complete rebuild of the WordPress website into a modern, lightweight, and fast static website with dynamic form handling.
+### Public Website
+- Modern, responsive landing page
+- Services showcase
+- Portfolio/case studies
+- Pricing plans
+- About page
+- Contact form
+- SEO optimized
 
-### Features
+### Client Features
+- Secure authentication (Email/Password)
+- Personal dashboard
+- Project tracking and management
+- Real-time support chat
+- AI-powered chatbot assistant
+- Appointment booking with Google Meet integration
+- File uploads and management
 
-- **Modern Design**: Clean, professional design with purple/magenta color scheme
-- **Fully Responsive**: Mobile-first design that works on all devices
-- **Fast Performance**: No WordPress overhead, pure HTML/CSS/JS
-- **SEO Friendly**: Semantic HTML, meta tags, and clean structure
-- **Interactive Elements**: Smooth animations, scroll effects, and transitions
-- **Contact Form**: PHP-powered contact form with email notifications
-- **Easy to Maintain**: Simple file structure, well-commented code
+### Admin Features
+- Comprehensive admin dashboard
+- Client management
+- Project management
+- Support chat management
+- Appointment scheduling
+- Analytics and reporting
 
-## Project Structure
+### Technical Features
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
+- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
+- **Real-time**: Live chat and updates
+- **Security**: Role-based access control, Firestore security rules
+- **Analytics**: Google Analytics, Facebook Pixel, LinkedIn Insight Tag
+- **SEO**: Optimized meta tags, sitemap support
 
+## 📋 Prerequisites
+
+- Node.js 18+ and npm
+- Firebase account
+- Google Cloud Project (for Google Meet integration)
+- OpenAI API key (for AI chatbot)
+
+## 🛠️ Installation
+
+### 1. Clone and Install Dependencies
+
+```bash
+# Install frontend dependencies
+npm install
+
+# Install Cloud Functions dependencies
+cd functions
+npm install
+cd ..
 ```
-Waarheid Rework/
-│
-├── index.html                  # Homepage
-├── about.html                  # About page
-├── services-marketing.html     # Marketing & Branding service page
-├── services-development.html   # Web & App Development service page
-├── services-automation.html    # Automation & BI service page
-├── contact-handler.php         # Contact form processing script
-│
-├── css/
-│   └── style.css              # Main stylesheet with design system
-│
-├── js/
-│   └── main.js                # JavaScript for interactions
-│
-├── images/                    # Images and media files
-│   └── 2024/                  # WordPress migrated images
-│
-├── assets/
-│   └── fonts/                 # Custom fonts (if needed)
-│
-└── README.md                  # This file
+
+### 2. Firebase Setup
+
+```bash
+# Install Firebase CLI globally
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Initialize Firebase project
+firebase init
 ```
 
-## Technologies Used
+Select the following features:
+- Firestore
+- Functions
+- Storage
+- Hosting (optional, if deploying to Firebase)
 
-- **HTML5**: Semantic markup
-- **CSS3**: Modern CSS with CSS Variables, Flexbox, Grid
-- **JavaScript**: Vanilla JS (no frameworks)
-- **PHP**: Server-side form processing
-- **Font Awesome**: Icon library
-- **Google Fonts**: Inter font family
+### 3. Environment Configuration
 
-## Pages Included
+Create `.env.local` in the root directory:
 
-1. **Homepage** (`index.html`)
-   - Hero section with call-to-action
-   - Services overview (3 core services)
-   - About section
-   - Clients showcase
-   - Contact form
+```env
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
-2. **About Page** (`about.html`)
-   - Company mission
-   - Approach and values
-   - Why choose Waarheid
+# Analytics & Tracking
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_FB_PIXEL_ID=your-fb-pixel-id
+NEXT_PUBLIC_GOOGLE_ADS_ID=AW-XXXXXXXXXX
+NEXT_PUBLIC_LINKEDIN_PARTNER_ID=your-linkedin-id
 
-3. **Service Pages**
-   - Marketing & Branding (`services-marketing.html`)
-   - Web & App Development (`services-development.html`)
-   - Automation & Business Intelligence (`services-automation.html`)
+# App Configuration
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
 
-## Setup Instructions
+### 4. Firebase Functions Configuration
 
-### 1. Server Requirements
+Set up environment variables for Cloud Functions:
 
-- **Web Server**: Apache, Nginx, or any web server
-- **PHP**: Version 7.4 or higher (for contact form)
-- **Mail Function**: PHP mail() function enabled
+```bash
+# OpenAI API Key for AI Chatbot
+firebase functions:config:set openai.key="your-openai-api-key"
 
-### 2. Installation
+# Google Service Account for Calendar/Meet (optional)
+firebase functions:config:set google.service_account_email="your-service-account@project.iam.gserviceaccount.com"
+firebase functions:config:set google.private_key="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
 
-1. **Upload Files**: Upload all files to your web server's public directory (usually `public_html/` or `www/`)
+### 5. Deploy Firestore Rules and Indexes
 
-2. **Configure Contact Form**:
-   - Open `contact-handler.php`
-   - Change line 15: `$to_email = 'info@waarheidmarketing.com';` to your email
-   - Change line 16: `$from_email` to your domain email
-   - Save the file
+```bash
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+firebase deploy --only storage
+```
 
-3. **Create Logs Directory** (optional):
+### 6. Deploy Cloud Functions
+
+```bash
+cd functions
+npm run build
+firebase deploy --only functions
+```
+
+## 🏃 Development
+
+### Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+### Run Functions Emulator
+
+```bash
+cd functions
+npm run serve
+```
+
+## 🌐 Deployment
+
+### Deploy to Hostinger
+
+1. **Build the application**:
    ```bash
-   mkdir logs
-   chmod 755 logs
+   npm run build
    ```
 
-4. **Test Contact Form**:
-   - Visit your website
-   - Fill out the contact form
-   - Check if you receive the email
-
-### 3. Customization
-
-#### Update Contact Information
-
-Search and replace in all HTML files:
-- `info@waarheidmarketing.com` → Your email
-- `+32 123 456 789` → Your phone number
-- Update social media links in footer
-
-#### Add Your Logo
-
-1. Add your logo image to `images/` folder (e.g., `logo.png`)
-2. In all HTML files, find the `.logo` element and add:
-   ```html
-   <a href="index.html" class="logo">
-     <img src="images/logo.png" alt="Waarheid Marketing">
-   </a>
+2. **Export static files** (if using static hosting):
+   ```bash
+   npm run export
    ```
 
-#### Change Colors
+3. **Upload to Hostinger**:
+   - Use FTP/SFTP to upload the `.next` folder or `out` folder (if exported)
+   - Configure Node.js application in Hostinger control panel
+   - Set environment variables in Hostinger
 
-Edit `css/style.css` and update CSS variables:
-```css
-:root {
-  --color-primary: #c50077;    /* Main brand color */
-  --color-secondary: #6a1c9a;  /* Secondary color */
-  --color-accent: #d6a86f;     /* Accent color */
-  /* ... other colors */
+### Configure DNS (AWS Route 53)
+
+1. In AWS Route 53, create a hosted zone for your domain
+2. Add an A record or CNAME pointing to your Hostinger server
+3. Update nameservers at your domain registrar
+
+### Deploy Firebase Functions
+
+```bash
+firebase deploy --only functions
+```
+
+## 🔐 Security Setup
+
+### Create First Admin User
+
+After deploying, you need to create your first admin user:
+
+1. Register a new account through the web interface
+2. Go to Firebase Console > Firestore Database
+3. Find the user document in the `users` collection
+4. Change the `role` field from `"client"` to `"admin"`
+
+### Google Meet Integration Setup
+
+1. Create a Google Cloud service account
+2. Enable Google Calendar API
+3. Share your Google Calendar with the service account email
+4. Add service account credentials to Firebase Functions config (see step 4 above)
+
+## 📂 Project Structure
+
+```
+/
+├── app/                    # Next.js app directory
+│   ├── (public pages)      # Landing, services, pricing, etc.
+│   ├── admin/              # Admin dashboard
+│   ├── client/             # Client dashboard
+│   ├── login/              # Authentication pages
+│   └── layout.tsx          # Root layout
+├── components/             # React components
+│   ├── auth/               # Auth components
+│   ├── booking/            # Appointment booking
+│   ├── chat/               # Chat widgets
+│   ├── layout/             # Layout components
+│   └── ui/                 # UI components
+├── lib/                    # Utilities and helpers
+│   ├── firebase.ts         # Firebase initialization
+│   ├── firestore.ts        # Firestore helpers
+│   ├── auth.ts             # Auth helpers
+│   └── hooks/              # Custom React hooks
+├── functions/              # Firebase Cloud Functions
+│   └── src/
+│       ├── aiChatbot.ts    # AI chatbot function
+│       ├── bookingWithMeet.ts  # Google Meet integration
+│       └── index.ts
+├── types/                  # TypeScript types
+├── firestore.rules         # Firestore security rules
+├── storage.rules           # Storage security rules
+└── firebase.json           # Firebase configuration
+```
+
+## 🎨 Customization
+
+### Branding
+
+Update the following:
+- Company name in `components/layout/Navbar.tsx`
+- Logo and colors in `tailwind.config.js`
+- Meta tags in `app/layout.tsx`
+- Contact information in `components/layout/Footer.tsx`
+
+### Styling
+
+The project uses Tailwind CSS. Customize colors in `tailwind.config.js`:
+
+```js
+theme: {
+  extend: {
+    colors: {
+      primary: {
+        // Your brand colors
+      },
+    },
+  },
 }
 ```
 
-#### Add Images
+## 📊 Analytics Setup
 
-1. Place images in `images/` folder
-2. Reference them in HTML: `<img src="images/your-image.jpg" alt="Description">`
+### Google Analytics
 
-## Contact Form Setup
+The GA4 tracking code is already integrated. Just add your Measurement ID to `.env.local`.
 
-The contact form uses PHP to send emails. Make sure:
+### Facebook Pixel
 
-1. **PHP Mail is Configured**: Test with a simple PHP mail script
-2. **SPF/DKIM Records**: Set up for your domain to avoid spam filters
-3. **Alternative**: Use a service like SendGrid, Mailgun, or FormSpree
+Add your Facebook Pixel ID to `.env.local` to enable tracking.
 
-### Using FormSpree (Alternative)
+### Google Ads Conversion Tracking
 
-If PHP mail doesn't work:
+Add your Google Ads ID to `.env.local`.
 
-1. Sign up at [FormSpree.io](https://formspree.io)
-2. Get your form endpoint
-3. Update the form in `index.html`:
-   ```html
-   <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-   ```
+## 🧪 Testing
 
-## Browser Support
+### Create Test Users
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Mobile browsers (iOS Safari, Chrome Android)
+For development, create test accounts:
+- Admin: test-admin@example.com
+- Client: test-client@example.com
 
-## Performance Optimization
+Remember to set proper roles in Firestore.
 
-### For Production:
+## 🐛 Troubleshooting
 
-1. **Minify CSS/JS**:
-   - Use tools like [UglifyJS](https://github.com/mishoo/UglifyJS) or online minifiers
-   - Rename to `style.min.css` and `main.min.js`
+### Firestore Permission Denied
 
-2. **Optimize Images**:
-   - Compress with [TinyPNG](https://tinypng.com/) or [ImageOptim](https://imageoptim.com/)
-   - Use WebP format for better compression
-   - Implement lazy loading (already in JS)
+- Verify security rules are deployed
+- Check user role in Firestore
+- Ensure user is authenticated
 
-3. **Enable Caching**:
-   Add to `.htaccess`:
-   ```apache
-   # Cache static assets
-   <IfModule mod_expires.c>
-     ExpiresActive On
-     ExpiresByType image/jpg "access plus 1 year"
-     ExpiresByType image/jpeg "access plus 1 year"
-     ExpiresByType image/png "access plus 1 year"
-     ExpiresByType text/css "access plus 1 month"
-     ExpiresByType application/javascript "access plus 1 month"
-   </IfModule>
-   ```
+### Cloud Functions Not Working
 
-4. **Enable Gzip Compression**:
-   Add to `.htaccess`:
-   ```apache
-   # Enable Gzip
-   <IfModule mod_deflate.c>
-     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript
-   </IfModule>
-   ```
+- Check function logs: `firebase functions:log`
+- Verify environment variables are set
+- Check Firebase billing is enabled (Functions require Blaze plan)
 
-## SEO Optimization
+### Google Meet Links Not Generating
 
-✅ Already included:
-- Semantic HTML5 tags
-- Meta descriptions on all pages
-- Alt text for images
-- Clean URLs
-- Fast loading times
-- Mobile responsive
+- Verify service account credentials
+- Check Calendar API is enabled
+- Ensure calendar is shared with service account
 
-### To improve SEO further:
+## 📝 License
 
-1. **Add Google Analytics**:
-   Add before `</head>` in all HTML files:
-   ```html
-   <!-- Google Analytics -->
-   <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
-   <script>
-     window.dataLayer = window.dataLayer || [];
-     function gtag(){dataLayer.push(arguments);}
-     gtag('js', new Date());
-     gtag('config', 'YOUR_GA_ID');
-   </script>
-   ```
+Proprietary - All rights reserved
 
-2. **Add robots.txt**:
-   Create `robots.txt` in root:
-   ```
-   User-agent: *
-   Allow: /
-   Sitemap: https://waarheidmarketing.com/sitemap.xml
-   ```
+## 🤝 Support
 
-3. **Create sitemap.xml**:
-   ```xml
-   <?xml version="1.0" encoding="UTF-8"?>
-   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-     <url>
-       <loc>https://waarheidmarketing.com/</loc>
-       <priority>1.0</priority>
-     </url>
-     <url>
-       <loc>https://waarheidmarketing.com/about.html</loc>
-       <priority>0.8</priority>
-     </url>
-     <!-- Add more pages -->
-   </urlset>
-   ```
+For support, email support@marketpro.com or open an issue in the repository.
 
-## Maintenance
+## 🚀 Next Steps
 
-### Regular Tasks:
-
-1. **Update Content**: Edit HTML files directly
-2. **Add Blog Posts**: Create new HTML files following the existing structure
-3. **Update Client Logos**: Replace in the clients section
-4. **Check Forms**: Test contact form monthly
-5. **Security**: Keep PHP updated, review logs
-
-## Migrating from WordPress
-
-Images have been copied from `public_html/wp-content/uploads/2024/` to `images/2024/`.
-
-### If you need more WordPress content:
-
-1. **Export Posts/Pages**: WordPress Admin → Tools → Export
-2. **Convert Content**: Copy text from WordPress to HTML files
-3. **Download Media**: Via FTP from `wp-content/uploads/`
-
-## Troubleshooting
-
-### Contact Form Not Working
-
-1. Check PHP mail is enabled: Create `test-mail.php`:
-   ```php
-   <?php
-   $result = mail('your@email.com', 'Test', 'This is a test');
-   echo $result ? 'Mail sent!' : 'Mail failed!';
-   ?>
-   ```
-
-2. Check error logs: `logs/contact-submissions.log`
-
-3. Try FormSpree alternative (see above)
-
-### Images Not Loading
-
-1. Check file paths are correct
-2. Ensure images are uploaded to server
-3. Check file permissions: `chmod 644 images/*`
-
-### Mobile Menu Not Working
-
-1. Clear browser cache
-2. Check JavaScript console for errors
-3. Ensure `js/main.js` is loaded
-
-## Support
-
-For questions or issues:
-- Email: info@waarheidmarketing.com
-- Review code comments in files
-- Check browser console for JavaScript errors
-
-## Credits
-
-- **Design & Development**: Custom rebuild for Waarheid Marketing
-- **Icons**: Font Awesome (https://fontawesome.com)
-- **Fonts**: Google Fonts - Inter (https://fonts.google.com)
-
-## License
-
-Proprietary - All rights reserved by Waarheid Marketing
+1. **Set up your Firebase project**
+2. **Configure environment variables**
+3. **Deploy Firestore rules and functions**
+4. **Create your first admin account**
+5. **Customize branding and content**
+6. **Deploy to Hostinger**
+7. **Configure DNS in Route 53**
+8. **Test all features**
+9. **Launch! 🎉**
 
 ---
 
-**Built with clarity, creativity, and modern technology** 🚀
+Built with ❤️ using Next.js and Firebase
