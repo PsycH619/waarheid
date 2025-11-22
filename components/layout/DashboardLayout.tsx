@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bot,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -38,6 +39,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   const clientLinks = [
     { href: '/client/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/client/projects', label: 'My Projects', icon: FolderKanban },
+    { href: '/client/ai-assistant', label: 'AI Assistant', icon: Bot },
     { href: '/client/chat', label: 'Support', icon: MessageSquare },
     { href: '/client/appointments', label: 'Appointments', icon: Calendar },
   ];
