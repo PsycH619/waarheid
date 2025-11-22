@@ -78,10 +78,17 @@ Your role is to:
 If you need specific account details or want to make changes, politely ask the user to contact their account manager or use the support chat.`;
 
       // Build conversation history for Gemini
-      const chatHistory = conversationHistory.map((msg: any) => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
+      // Gemini requires history to start with 'user', so filter accordingly
+      const chatHistory = conversationHistory
+        .map((msg: any) => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }],
+        }))
+        .filter((msg, index, arr) => {
+          // Remove first message if it's from model (Gemini requirement)
+          if (index === 0 && msg.role === 'model') return false;
+          return true;
+        });
 
       // Initialize Gemini model
       const model = genAI.getGenerativeModel({
