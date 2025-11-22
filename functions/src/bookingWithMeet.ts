@@ -7,7 +7,7 @@ import { google } from 'googleapis';
  * This function uses Google Calendar API with a service account
  */
 export const createGoogleMeeting = functions.https.onCall(
-  async (data: { appointmentId: string }, context) => {
+  async (data: { appointmentId: string }, context: functions.https.CallableContext) => {
     // Verify authentication
     if (!context.auth) {
       throw new functions.https.HttpsError(

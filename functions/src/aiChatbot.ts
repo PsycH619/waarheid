@@ -18,7 +18,7 @@ interface AIChatRequest {
  * Provides AI-powered support to clients
  */
 export const aiChatbot = functions.https.onCall(
-  async (data: AIChatRequest, context) => {
+  async (data: AIChatRequest, context: functions.https.CallableContext) => {
     // Verify authentication
     if (!context.auth) {
       throw new functions.https.HttpsError(

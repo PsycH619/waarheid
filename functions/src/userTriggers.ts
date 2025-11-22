@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
  * Trigger when a new user is created via Firebase Auth
  * This ensures user data is properly initialized
  */
-export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+export const onUserCreated = functions.auth.user().onCreate(async (user: functions.auth.UserRecord) => {
   try {
     const { uid, email, displayName } = user;
 
