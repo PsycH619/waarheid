@@ -2,7 +2,7 @@
 
 import React, { createContext, useEffect, useState, ReactNode } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { onAuthChange, getUserData, signOut as authSignOut } from '@/lib/auth';
+import { onAuthChange, getUserData, signOut as authSignOut, ensureUserDocument } from '@/lib/auth';
 import type { User, UserRole } from '@/types';
 
 interface AuthContextType {
@@ -10,6 +10,7 @@ interface AuthContextType {
   userData: User | null;
   role: UserRole | null;
   loading: boolean;
+  error: string | null;
   signOut: () => Promise<void>;
 }
 
@@ -23,15 +24,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
+      setError(null);
 
       if (firebaseUser) {
-        // Fetch user data from Firestore
-        const data = await getUserData(firebaseUser.uid);
-        setUserData(data);
+        try {
+          // Fetch user data from Firestore
+          let data = await getUserData(firebaseUser.uid);
+
+          // Safety net: If user document doesn't exist, create it
+          if (!data) {
+            console.warn('⚠️ User document missing, creating now...');
+            data = await ensureUserDocument(firebaseUser);
+          }
+
+          setUserData(data);
+        } catch (err: any) {
+          console.error('❌ Error loading user data:', err);
+          setError(err.message || 'Failed to load user data');
+          setUserData(null);
+        }
       } else {
         setUserData(null);
       }
@@ -53,6 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userData,
     role: userData?.role || null,
     loading,
+    error,
     signOut: handleSignOut,
   };
 
