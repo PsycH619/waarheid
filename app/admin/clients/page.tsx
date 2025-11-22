@@ -144,11 +144,12 @@ export default function AdminClientsPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredClients.map((client) => (
-                <Card
+                <div
                   key={client.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  className="cursor-pointer"
                   onClick={() => viewClientDetails(client)}
                 >
+                  <Card className="hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{client.name}</h3>
@@ -179,6 +180,7 @@ export default function AdminClientsPage() {
                     </div>
                   </div>
                 </Card>
+                </div>
               ))}
             </div>
           )}
