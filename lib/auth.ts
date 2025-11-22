@@ -29,7 +29,7 @@ export async function ensureUserDocument(
     }
 
     // User document doesn't exist, create it
-    const newUserData: Omit<User, 'id'> = {
+    const newUserData: any = {
       email: firebaseUser.email || '',
       name: firebaseUser.displayName || additionalData?.name || 'User',
       role: additionalData?.role || 'client',
