@@ -46,18 +46,24 @@ export default function AppointmentBooking({
       const endTime = new Date(startTime.getTime() + parseInt(formData.duration) * 60000);
 
       // Create appointment in Firestore
-      const appointmentId = await appointmentService.create({
+      const appointmentData: any = {
         clientId: userData.id,
         clientName: userData.name,
         clientEmail: userData.email,
-        projectId,
         title: formData.title,
         description: formData.description,
         startTime,
         endTime,
         status: 'scheduled',
         createdAt: new Date(),
-      });
+      };
+
+      // Only include projectId if it's defined (Firestore doesn't accept undefined)
+      if (projectId) {
+        appointmentData.projectId = projectId;
+      }
+
+      const appointmentId = await appointmentService.create(appointmentData);
 
       // Call Cloud Function to create Google Meet link
       try {
