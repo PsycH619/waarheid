@@ -1,11 +1,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize OpenAI (you can also use Gemini/Anthropic)
-const openai = new OpenAI({
-  apiKey: functions.config().openai?.key || process.env.OPENAI_API_KEY,
-});
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(
+  functions.config().gemini?.key || process.env.GEMINI_API_KEY || ''
+);
 
 interface AIChatRequest {
   message: string;
@@ -15,7 +15,7 @@ interface AIChatRequest {
 
 /**
  * AI Chatbot Cloud Function
- * Provides AI-powered support to clients
+ * Provides AI-powered support to clients using Google Gemini
  */
 export const aiChatbot = functions.https.onCall(
   async (data: AIChatRequest, context: functions.https.CallableContext) => {
@@ -58,8 +58,8 @@ export const aiChatbot = functions.https.onCall(
         ...doc.data(),
       }));
 
-      // Build context-aware system message
-      const systemMessage = `You are a helpful AI assistant for MarketPro, a marketing agency.
+      // Build context-aware system instruction
+      const systemInstruction = `You are a helpful AI assistant for MarketPro, a marketing agency.
 You are assisting ${userData?.name || 'a client'} who is a client of our agency.
 ${
   projects.length > 0
@@ -77,25 +77,26 @@ Your role is to:
 
 If you need specific account details or want to make changes, politely ask the user to contact their account manager or use the support chat.`;
 
-      // Build messages array for OpenAI
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-        { role: 'system', content: systemMessage },
-        ...conversationHistory.map((msg: any) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        })),
-        { role: 'user', content: message },
-      ];
+      // Build conversation history for Gemini
+      const chatHistory = conversationHistory.map((msg: any) => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }],
+      }));
 
-      // Call OpenAI API
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages,
-        temperature: 0.7,
-        max_tokens: 500,
+      // Initialize Gemini model
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction,
       });
 
-      const aiResponse = completion.choices[0]?.message?.content ||
+      // Start chat with history
+      const chat = model.startChat({
+        history: chatHistory,
+      });
+
+      // Send message and get response
+      const result = await chat.sendMessage(message);
+      const aiResponse = result.response.text() ||
         'I apologize, but I encountered an error. Please try again or contact support.';
 
       // Log the conversation to Firestore for analysis
@@ -104,7 +105,7 @@ If you need specific account details or want to make changes, politely ask the u
         userMessage: message,
         aiResponse,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        model: 'gpt-3.5-turbo',
+        model: 'gemini-1.5-flash',
       });
 
       return {
