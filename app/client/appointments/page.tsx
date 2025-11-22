@@ -13,6 +13,7 @@ import type { Appointment } from '@/types';
 import { formatDate } from '@/utils/formatters';
 import { Calendar, ExternalLink, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Timestamp } from 'firebase/firestore';
 
 export default function ClientAppointmentsPage() {
   const { userData } = useAuth();
@@ -58,13 +59,25 @@ export default function ClientAppointmentsPage() {
     }
   };
 
-  const upcomingAppointments = appointments.filter(
-    (apt) => apt.status === 'scheduled' && new Date(apt.startTime.toString()) > new Date()
-  );
+  const upcomingAppointments = appointments.filter((apt) => {
+    if (apt.status !== 'scheduled') return false;
 
-  const pastAppointments = appointments.filter(
-    (apt) => apt.status === 'completed' || new Date(apt.startTime.toString()) <= new Date()
-  );
+    const startTime = apt.startTime instanceof Timestamp
+      ? apt.startTime.toDate()
+      : new Date(apt.startTime);
+
+    return startTime > new Date();
+  });
+
+  const pastAppointments = appointments.filter((apt) => {
+    if (apt.status === 'completed' || apt.status === 'cancelled') return true;
+
+    const startTime = apt.startTime instanceof Timestamp
+      ? apt.startTime.toDate()
+      : new Date(apt.startTime);
+
+    return startTime <= new Date();
+  });
 
   return (
     <ProtectedRoute requiredRole="client">
