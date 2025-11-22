@@ -11,12 +11,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    function userDocExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function isAdmin() {
-      return isAuthenticated() && getUserData().role == 'admin';
+      return isAuthenticated() && userDocExists() && getUserData().role == 'admin';
     }
 
     function isClient() {
-      return isAuthenticated() && getUserData().role == 'client';
+      return isAuthenticated() && userDocExists() && getUserData().role == 'client';
     }
 
     function isOwner(userId) {
@@ -28,8 +32,12 @@ service cloud.firestore {
       // Users can read their own data, admins can read all
       allow read: if isOwner(userId) || isAdmin();
 
-      // Only admins can create user documents (besides auth triggers)
-      allow create: if isAdmin();
+      // Allow users to create their OWN document during signup, or admins to create any
+      // This is critical for the signup flow to work
+      allow create: if isAuthenticated() && (
+        request.auth.uid == userId || // User creating their own document
+        isAdmin() // Or admin creating for someone
+      );
 
       // Users can update their own data, admins can update all
       allow update: if isOwner(userId) || isAdmin();
@@ -72,14 +80,14 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       // Clients can read their own conversations, admins can read all
       allow read: if isAdmin() ||
-                     (isClient() && resource.data.clientId == request.auth.uid);
+                     (isAuthenticated() && resource.data.clientId == request.auth.uid);
 
-      // Clients can create their own conversations
-      allow create: if isClient() && request.resource.data.clientId == request.auth.uid;
+      // Authenticated users can create their own conversations
+      allow create: if isAuthenticated() && request.resource.data.clientId == request.auth.uid;
 
       // Both clients and admins can update conversations
       allow update: if isAdmin() ||
-                       (isClient() && resource.data.clientId == request.auth.uid);
+                       (isAuthenticated() && resource.data.clientId == request.auth.uid);
 
       // Only admins can delete conversations
       allow delete: if isAdmin();
@@ -89,14 +97,13 @@ service cloud.firestore {
     match /messages/{messageId} {
       // Users can read messages from their conversations, admins can read all
       allow read: if isAdmin() ||
-                     (isClient() &&
+                     (isAuthenticated() &&
                       get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.clientId == request.auth.uid);
 
-      // Users can create messages in their conversations
+      // Users can create messages in their own conversations
       allow create: if isAuthenticated() &&
                        (isAdmin() ||
-                        (isClient() &&
-                         get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.clientId == request.auth.uid));
+                        get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.clientId == request.auth.uid);
 
       // Only admins can update/delete messages
       allow update, delete: if isAdmin();
@@ -106,14 +113,14 @@ service cloud.firestore {
     match /appointments/{appointmentId} {
       // Clients can read their own appointments, admins can read all
       allow read: if isAdmin() ||
-                     (isClient() && resource.data.clientId == request.auth.uid);
+                     (isAuthenticated() && resource.data.clientId == request.auth.uid);
 
-      // Clients can create their own appointments
-      allow create: if isClient() && request.resource.data.clientId == request.auth.uid;
+      // Authenticated users can create their own appointments
+      allow create: if isAuthenticated() && request.resource.data.clientId == request.auth.uid;
 
       // Admins can update all, clients can update their own
       allow update: if isAdmin() ||
-                       (isClient() && resource.data.clientId == request.auth.uid);
+                       (isAuthenticated() && resource.data.clientId == request.auth.uid);
 
       // Only admins can delete appointments
       allow delete: if isAdmin();
