@@ -64,8 +64,8 @@ You are assisting ${userData?.name || 'a client'} who is a client of our agency.
 ${
   projects.length > 0
     ? `They have ${projects.length} project(s) with us: ${projects
-        .map((p: any) => p.title)
-        .join(', ')}.`
+      .map((p: any) => p.title)
+      .join(', ')}.`
     : 'They are a new client exploring our services.'
 }
 
