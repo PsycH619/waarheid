@@ -48,6 +48,11 @@ module.exports = {
           900: '#7c2d12',
           950: '#431407',
         },
+
+        // Utility colors for border, background, and foreground
+        border: '#e5e7eb',
+        background: '#ffffff',
+        foreground: '#020617',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
