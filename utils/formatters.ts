@@ -1,24 +1,64 @@
 import { format, formatDistance, formatRelative } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
-export function formatDate(date: Date | Timestamp, formatStr: string = 'PPP'): string {
-  const jsDate = date instanceof Timestamp ? date.toDate() : date;
-  return format(jsDate, formatStr);
+export function formatDate(date: Date | Timestamp | undefined | null, formatStr: string = 'PPP'): string {
+  if (!date) return '';
+
+  try {
+    const jsDate = date instanceof Timestamp ? date.toDate() : date;
+    if (!(jsDate instanceof Date) || isNaN(jsDate.getTime())) {
+      return '';
+    }
+    return format(jsDate, formatStr);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
 }
 
-export function formatTime(date: Date | Timestamp, formatStr: string = 'p'): string {
-  const jsDate = date instanceof Timestamp ? date.toDate() : date;
-  return format(jsDate, formatStr);
+export function formatTime(date: Date | Timestamp | undefined | null, formatStr: string = 'p'): string {
+  if (!date) return '';
+
+  try {
+    const jsDate = date instanceof Timestamp ? date.toDate() : date;
+    if (!(jsDate instanceof Date) || isNaN(jsDate.getTime())) {
+      return '';
+    }
+    return format(jsDate, formatStr);
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return '';
+  }
 }
 
-export function formatDateTime(date: Date | Timestamp): string {
-  const jsDate = date instanceof Timestamp ? date.toDate() : date;
-  return format(jsDate, 'PPP p');
+export function formatDateTime(date: Date | Timestamp | undefined | null): string {
+  if (!date) return '';
+
+  try {
+    const jsDate = date instanceof Timestamp ? date.toDate() : date;
+    if (!(jsDate instanceof Date) || isNaN(jsDate.getTime())) {
+      return '';
+    }
+    return format(jsDate, 'PPP p');
+  } catch (error) {
+    console.error('Error formatting datetime:', error);
+    return '';
+  }
 }
 
-export function formatRelativeTime(date: Date | Timestamp): string {
-  const jsDate = date instanceof Timestamp ? date.toDate() : date;
-  return formatDistance(jsDate, new Date(), { addSuffix: true });
+export function formatRelativeTime(date: Date | Timestamp | undefined | null): string {
+  if (!date) return '';
+
+  try {
+    const jsDate = date instanceof Timestamp ? date.toDate() : date;
+    if (!(jsDate instanceof Date) || isNaN(jsDate.getTime())) {
+      return '';
+    }
+    return formatDistance(jsDate, new Date(), { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting relative time:', error);
+    return '';
+  }
 }
 
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
